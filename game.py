@@ -16,7 +16,7 @@ class Doomcrawl:
         
         self.player = Player(player_startpos, (config.thickness, config.thickness))
         self.dungeon = Dungeon((config.viewport_x, config.viewport_y), player_startpos)
-        self.dungeon.add_room(config.start_room_size, center=player_startpos)
+        self.dungeon.add_room(center=player_startpos)
 
     def start(self):
         self.loop()
@@ -34,7 +34,7 @@ class Doomcrawl:
             self.viewport.fill(config.color["bg"])
 
             self.viewport.blit(self.dungeon.texture, (0,0))
-            
+
             pygame.draw.rect(self.viewport, config.color["hilite1"], self.player)
 
             if config.collision_debug:

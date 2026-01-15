@@ -1,6 +1,6 @@
 import pygame
 
-collision_debug = True
+collision_debug = False
 
 viewport_x = 800
 viewport_y = 600
@@ -16,4 +16,5 @@ color = {
     "bg":       pygame.Color(20,23,30),     # ink black
     }
 
-start_room_size = (100,80)
+room_size_min = (thickness*3, thickness*3)
+room_size_max = (viewport_x//4, viewport_y//3)

@@ -1,4 +1,5 @@
 import pygame
+from random import randint
 import config
 
 class Dungeon:
@@ -24,7 +25,10 @@ class Dungeon:
         overlay = self.collision_mask.to_surface(setcolor=(0, 200, 0, 100), unsetcolor=(0, 0, 0, 0))
         viewport.blit(overlay, (0, 0))
 
-    def add_room(self, size, pos=None, center=None):
+    def add_room(self, size=None, pos=None, center=None):
+        if size == None:
+            size = self.randomize_room_size()
+
         room = pygame.Surface(size)
         room.fill(config.color["col1"])
 
@@ -37,3 +41,8 @@ class Dungeon:
         self.collision_surface.blit(room, offset)
         self.render_collision_mask()
         self.texture.blit(room, offset)
+
+    def randomize_room_size(self):
+        x = randint(config.room_size_min[0], config.room_size_max[0])
+        y = randint(config.room_size_min[1], config.room_size_max[1])
+        return (x,y)
