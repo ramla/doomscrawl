@@ -21,13 +21,15 @@ class Doomcrawl:
         self.dungeon.add_room(center=player_startpos)
 
     def start(self):
-        self.loop()
+        self.loop(config.target_fps)
         sys.exit()
 
-    def loop(self):
+    def loop(self, target_fps):
         FPS = pygame.time.Clock()
         self.running = True
         while self.running:
+            frame_time = FPS.tick(target_fps) / 1000
+            
             self.process_events()
             self.process_key_input()
 
@@ -44,7 +46,6 @@ class Doomcrawl:
                 self.player.draw_collision_overlay(self.viewport)
 
             pygame.display.flip()
-            FPS.tick(60)
     
     def process_events(self):
         for event in pygame.event.get():

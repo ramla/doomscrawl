@@ -4,8 +4,10 @@ collision_debug = False
 
 viewport_x = 800
 viewport_y = 600
+target_fps = 60
 
-thickness = 15
+thickness = min(viewport_x, viewport_y) // 40
+
 color = {
     "light1":   pygame.Color(235,235,235),  # platinum
     "col1":     pygame.Color(82,72,156),    # dusty grape
@@ -18,3 +20,5 @@ color = {
 
 room_size_min = (thickness*3, thickness*3)
 room_size_max = (viewport_x//4, viewport_y//3)
+
+player_speed = 300

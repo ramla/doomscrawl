@@ -1,10 +1,10 @@
 import pygame
-
+import config
 
 class Player(pygame.Rect):
-    def __init__(self, starting_pos:tuple, size:tuple, speed=5):
+    def __init__(self, starting_pos:tuple, size:tuple):
         super().__init__(starting_pos[0], starting_pos[1], size[0], size[1])
-        self.speed = speed
+        self.speed = config.player_speed / config.target_fps
         self.size = size
         self.collision_mask = pygame.Mask((size[0], size[1]), fill=True)
 
