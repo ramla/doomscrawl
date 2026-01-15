@@ -11,14 +11,13 @@ import config
 class Doomcrawl:
     def __init__(self):
         pygame.init()
-        player_startpos = ((config.viewport_x - config.thickness // 2) // 2, config.viewport_y - config.thickness)
+        player_startpos = ((config.viewport_x - config.thickness // 2) // 2, config.viewport_y - config.thickness * 3)
 
         self.viewport = pygame.display.set_mode((config.viewport_x,config.viewport_y), pygame.RESIZABLE)
         pygame.display.set_caption('Doomscrawl')
         
         self.player = Player(player_startpos, (config.thickness, config.thickness))
         self.dungeon = Dungeon((config.viewport_x, config.viewport_y), player_startpos)
-        self.dungeon.add_room(center=player_startpos)
 
     def start(self):
         self.loop(config.target_fps)
@@ -29,7 +28,7 @@ class Doomcrawl:
         self.running = True
         while self.running:
             frame_time = FPS.tick(target_fps) / 1000
-            
+
             self.process_events()
             self.process_key_input()
 
@@ -37,7 +36,9 @@ class Doomcrawl:
 
             self.viewport.fill(config.color["bg"])
 
-            self.viewport.blit(self.dungeon.texture, (0,0))
+            # self.viewport.blit(self.dungeon.texture, (0,0))
+            for room in self.dungeon.rooms:
+                pygame.draw.rect(self.viewport, config.color["col1"], room)
 
             pygame.draw.rect(self.viewport, config.color["hilite1"], self.player)
 
@@ -51,6 +52,10 @@ class Doomcrawl:
         for event in pygame.event.get():
             if event.type == QUIT:
                 self.running = False
+            if event.type == KEYDOWN:
+                if event.key == pygame.K_r:
+                    self.dungeon.add_room()
+                    
 
     def process_key_input(self):
         keys = pygame.key.get_pressed()
@@ -77,6 +82,4 @@ class Doomcrawl:
 
         if keys[pygame.K_q]:
             self.running = False
-        if keys[pygame.K_r]:
-            self.dungeon.add_room(center=(randint(config.thickness,config.viewport_x-config.thickness), randint(config.thickness,config.viewport_y-config.thickness)))
 

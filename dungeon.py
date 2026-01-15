@@ -4,11 +4,12 @@ import config
 
 class Dungeon:
     def __init__(self, screen_size, player_startpos):
-        self.room_count = 0
+        self.rooms = []
         self.screen_size = screen_size
         self.init_collision_surface()
         self.render_collision_mask()
         self.init_texture()
+        self.add_room(center=player_startpos, fail_allowed=False)
 
     def init_collision_surface(self):
         self.collision_surface = pygame.Surface((self.screen_size[0], self.screen_size[1]))
@@ -26,34 +27,62 @@ class Dungeon:
         overlay = self.collision_mask.to_surface(setcolor=(0, 200, 0, 100), unsetcolor=(0, 0, 0, 0))
         viewport.blit(overlay, (0, 0))
 
-    def add_room(self, size=None, pos=None, center=None):
-        if size == None:
-            size = self.randomize_room_size()
+    def add_room(self, size=None, pos=None, center=None, fail_allowed=True):
+        if fail_allowed:
+            tries = 10
+        else:
+            tries = 99999
 
-        room = pygame.Surface(size)
-        room.fill(config.color["col1"])
-
-        offset = (0,0)
-        if pos:
-            offset = pos
-        elif center:
-            offset = (center[0] - size[0]//2, center[1] - size[1]//2)
-        
-        margin = config.thickness
-        mask = pygame.mask.from_surface(pygame.Surface((size[0]+2*margin, size[1]+2*margin)))
-
-        if not self.overlapping_existing(mask, (offset[0]-margin, offset[1]-margin)):
-            self.collision_surface.blit(room, offset)
-            self.render_collision_mask()
-            self.texture.blit(room, offset)
-            self.room_count += 1
-
-    def randomize_room_size(self):
-        x = randint(config.room_size_min[0], config.room_size_max[0])
-        y = randint(config.room_size_min[1], config.room_size_max[1])
-        return (x,y)
+        while tries > 0:
+            room = Room(size=size, pos=pos, center=center)
+            if not self.collision_mask.overlap(room.mask, room.get_mask_offset()):
+                self.collision_surface.blit(room.surface, room.offset)
+                self.render_collision_mask()
+                self.rooms.append(room)
+                return True
+            tries -= 1
+        return False
 
     def overlapping_existing(self, mask, offset):
         if self.collision_mask.overlap(mask, offset):
             return True
         return False
+
+
+class Room(pygame.Rect):
+    def __init__(self, size=None, pos=None, center=None):
+        self.scale = 1
+        if size == None:
+            self.size = self.get_random_size()
+        else:
+            self.size = size
+
+        if pos:
+            self.offset = pos
+        elif center:
+            self.offset = (center[0] - self.size[0]//2, center[1] - self.size[1]//2)
+        else:
+            self.offset = self.get_random_center()
+
+        super().__init__(self.offset[0], self.offset[1], self.size[0], self.size[1])
+
+        margin = config.thickness
+        self.mask = pygame.Mask((self.size[0]+2*margin, self.size[1]+2*margin), fill=True)
+
+        self.surface = pygame.Surface(self.size)
+        self.surface.fill(config.color["col1"])
+
+    def get_random_size(self):
+        x = randint(config.room_size_min[0], config.room_size_max[0])
+        y = randint(config.room_size_min[1], config.room_size_max[1])
+        return (x,y)
+
+    def get_random_center(self):
+        x = randint(config.thickness + self.size[0] // 2, config.viewport_x - config.thickness - self.size[0] // 2)
+        y = randint(config.thickness + self.size[1] // 2, config.viewport_y - config.thickness - self.size[1] // 2)
+        return (x,y)
+
+    def get_mask_offset(self):
+        x = self.offset[0] - config.thickness
+        y = self.offset[1] - config.thickness
+        return (x,y)
