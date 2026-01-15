@@ -33,6 +33,8 @@ class Doomcrawl:
 
             self.viewport.fill(config.color["bg"])
 
+            self.viewport.blit(self.dungeon.texture, (0,0))
+            
             pygame.draw.rect(self.viewport, config.color["hilite1"], self.player)
 
             if config.collision_debug:
