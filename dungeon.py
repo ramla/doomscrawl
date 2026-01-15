@@ -4,6 +4,7 @@ import config
 
 class Dungeon:
     def __init__(self, screen_size, player_startpos):
+        self.room_count = 0
         self.screen_size = screen_size
         self.init_collision_surface()
         self.render_collision_mask()
@@ -38,11 +39,21 @@ class Dungeon:
         elif center:
             offset = (center[0] - size[0]//2, center[1] - size[1]//2)
         
-        self.collision_surface.blit(room, offset)
-        self.render_collision_mask()
-        self.texture.blit(room, offset)
+        margin = config.thickness
+        mask = pygame.mask.from_surface(pygame.Surface((size[0]+2*margin, size[1]+2*margin)))
+
+        if not self.overlapping_existing(mask, (offset[0]-margin, offset[1]-margin)):
+            self.collision_surface.blit(room, offset)
+            self.render_collision_mask()
+            self.texture.blit(room, offset)
+            self.room_count += 1
 
     def randomize_room_size(self):
         x = randint(config.room_size_min[0], config.room_size_max[0])
         y = randint(config.room_size_min[1], config.room_size_max[1])
         return (x,y)
+
+    def overlapping_existing(self, mask, offset):
+        if self.collision_mask.overlap(mask, offset):
+            return True
+        return False

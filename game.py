@@ -1,6 +1,8 @@
 import pygame
 from pygame.locals import *
 import sys
+from random import randint
+
 from dungeon import Dungeon
 from player import Player
 import config
@@ -74,7 +76,6 @@ class Doomcrawl:
 
         if keys[pygame.K_q]:
             self.running = False
-        # if keys[pygame.K_r]:
-        #     self.dungeon.add_room()
-
+        if keys[pygame.K_r]:
+            self.dungeon.add_room(center=(randint(config.thickness,config.viewport_x-config.thickness), randint(config.thickness,config.viewport_y-config.thickness)))
 
