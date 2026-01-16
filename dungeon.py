@@ -3,17 +3,21 @@ from random import randint
 import config
 
 class Dungeon:
-    def __init__(self, screen_size, player_startpos):
+    def __init__(self, screen_size):
         self.rooms = []
         self.screen_size = screen_size
         self.init_collision_surface()
         self.render_collision_mask()
         self.init_texture()
-        self.add_room(center=player_startpos, fail_allowed=False)
+        self.add_room(fail_allowed=False)
+        self.player_start_pos = self.rooms[0].center
 
     def init_collision_surface(self):
         self.collision_surface = pygame.Surface((self.screen_size[0], self.screen_size[1]))
-        self.collision_surface.fill((0,0,0))
+        self.collision_surface.fill((255,255,255))
+        actual = pygame.Surface((self.screen_size[0]-20, self.screen_size[1]-20))
+        actual.fill((0,0,0))
+        self.collision_surface.blit(actual,(10,10))
         self.collision_surface.set_colorkey((0,0,0))
 
     def init_texture(self):
@@ -35,9 +39,11 @@ class Dungeon:
 
         while tries > 0:
             room = Room(size=size, pos=pos, center=center)
+            print(f"center {center}, size {room.size}, offset {room.offset}")
             if not self.collision_mask.overlap(room.mask, room.get_mask_offset()):
                 self.collision_surface.blit(room.surface, room.offset)
                 self.render_collision_mask()
+                room.anim_pop()
                 self.rooms.append(room)
                 return True
             tries -= 1

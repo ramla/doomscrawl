@@ -11,13 +11,11 @@ import config
 class Doomcrawl:
     def __init__(self):
         pygame.init()
-        player_startpos = ((config.viewport_x - config.thickness // 2) // 2, config.viewport_y - config.thickness * 3)
-
         self.viewport = pygame.display.set_mode((config.viewport_x,config.viewport_y), pygame.RESIZABLE)
         pygame.display.set_caption('Doomscrawl')
         
-        self.player = Player(player_startpos, (config.thickness, config.thickness))
-        self.dungeon = Dungeon((config.viewport_x, config.viewport_y), player_startpos)
+        self.dungeon = Dungeon((config.viewport_x, config.viewport_y))
+        self.player = Player(self.dungeon.player_start_pos, (config.thickness, config.thickness))
 
     def start(self):
         self.loop(config.target_fps)
