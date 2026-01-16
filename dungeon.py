@@ -68,9 +68,11 @@ class Room(pygame.Rect):
         elif center:
             self.offset = (center[0] - self.size[0]//2, center[1] - self.size[1]//2)
         else:
-            self.offset = self.get_random_center()
+            self.offset = self.get_random_pos()
 
         super().__init__(self.offset[0], self.offset[1], self.size[0], self.size[1])
+
+        self.center = (self.offset[0] + self.size[0] // 2, self.offset[1] + self.size[1] // 2)
 
         margin = config.thickness
         self.mask = pygame.Mask((self.size[0]+2*margin, self.size[1]+2*margin), fill=True)
@@ -88,7 +90,23 @@ class Room(pygame.Rect):
         y = randint(config.thickness + self.size[1] // 2, config.viewport_y - config.thickness - self.size[1] // 2)
         return (x,y)
 
+    def get_random_pos(self):
+        x = randint(config.thickness, config.viewport_x - config.thickness - self.size[0])
+        y = randint(config.thickness, config.viewport_y - config.thickness - self.size[1])
+        return (x,y)
+
     def get_mask_offset(self):
         x = self.offset[0] - config.thickness
         y = self.offset[1] - config.thickness
         return (x,y)
+    
+    def anim_pop(self):
+        self.pop_timer = 2
+        self.scale_by_ip((100 + self.pop_timer) / 100)
+    
+    def anim_tick(self, frame_time):
+        if self.pop_timer > 0:
+            self.pop_timer -= frame_time
+            self.scale_by_ip((100 + self.pop_timer) / 100)
+
+
