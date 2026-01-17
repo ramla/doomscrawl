@@ -12,7 +12,8 @@ from bowyer_watson import BowyerWatson
 class Doomcrawl:
     def __init__(self):
         pygame.init()
-        self.viewport = pygame.display.set_mode((config.viewport_x,config.viewport_y), pygame.RESIZABLE)
+        self.viewport = pygame.display.set_mode((config.viewport_x,config.viewport_y),
+                                                pygame.RESIZABLE)
         pygame.display.set_caption('Doomscrawl')
 
         self.dungeon = Dungeon((config.viewport_x, config.viewport_y))
@@ -62,22 +63,30 @@ class Doomcrawl:
     def process_key_input(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            if self.dungeon.collision_mask.overlap(self.player.collision_mask, (self.player.x - self.player.speed - self.player.size[0], self.player.y)):
+            if self.dungeon.collision_mask.overlap(self.player.collision_mask,
+                                    (self.player.x - self.player.speed - self.player.size[0],
+                                     self.player.y)):
                 self.player.move_ip(-self.player.speed, 0)
             elif config.collision_debug:
                 print("colliding left")
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            if self.dungeon.collision_mask.overlap(self.player.collision_mask, (self.player.x + self.player.speed + self.player.size[0], self.player.y)):
+            if self.dungeon.collision_mask.overlap(self.player.collision_mask,
+                                    (self.player.x + self.player.speed + self.player.size[0],
+                                     self.player.y)):
                 self.player.move_ip(self.player.speed, 0)
             elif config.collision_debug:
                 print("colliding right")
         if keys[pygame.K_UP] or keys[pygame.K_w]:
-            if self.dungeon.collision_mask.overlap(self.player.collision_mask, (self.player.x, self.player.y - self.player.speed - self.player.size[1])):
+            if self.dungeon.collision_mask.overlap(self.player.collision_mask,
+                                    (self.player.x,
+                                     self.player.y - self.player.speed - self.player.size[1])):
                 self.player.move_ip(0, -self.player.speed)
             elif config.collision_debug:
                 print("colliding up")
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            if self.dungeon.collision_mask.overlap(self.player.collision_mask, (self.player.x, self.player.y + self.player.speed + self.player.size[1])):
+            if self.dungeon.collision_mask.overlap(self.player.collision_mask,
+                                    (self.player.x,
+                                     self.player.y + self.player.speed + self.player.size[1])):
                 self.player.move_ip(0, self.player.speed)
             elif config.collision_debug:
                 print("colliding down")

@@ -28,7 +28,8 @@ class Dungeon:
         self.collision_mask = pygame.mask.from_surface(self.collision_surface)
 
     def draw_collision_overlay(self, viewport):
-        overlay = self.collision_mask.to_surface(setcolor=(0, 200, 0, 100), unsetcolor=(0, 0, 0, 0))
+        overlay = self.collision_mask.to_surface(setcolor=(0, 200, 0, 100),
+                                                 unsetcolor=(0, 0, 0, 0))
         viewport.blit(overlay, (0, 0))
 
     def add_room(self, size=None, pos=None, center=None, fail_allowed=True):
@@ -92,8 +93,10 @@ class Room(pygame.Rect):
         return (x,y)
 
     def get_random_center(self):
-        x = randint(config.thickness + self.size[0] // 2, config.viewport_x - config.thickness - self.size[0] // 2)
-        y = randint(config.thickness + self.size[1] // 2, config.viewport_y - config.thickness - self.size[1] // 2)
+        x = randint(config.thickness + self.size[0] // 2,
+                    config.viewport_x - config.thickness - self.size[0] // 2)
+        y = randint(config.thickness + self.size[1] // 2,
+                    config.viewport_y - config.thickness - self.size[1] // 2)
         return (x,y)
 
     def get_random_pos(self):
