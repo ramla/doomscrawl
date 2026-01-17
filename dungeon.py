@@ -57,7 +57,6 @@ class Dungeon:
 
 class Room(pygame.Rect):
     def __init__(self, size=None, pos=None, center=None):
-        self.scale = 1
         if size == None:
             self.size = self.get_random_size()
         else:
@@ -66,13 +65,11 @@ class Room(pygame.Rect):
         if pos:
             self.offset = pos
         elif center:
-            self.offset = (center[0] - self.size[0]//2, center[1] - self.size[1]//2)
+            self.offset = (center[0] - self.size[0] // 2, center[1] - self.size[1] // 2)
         else:
             self.offset = self.get_random_pos()
 
         super().__init__(self.offset[0], self.offset[1], self.size[0], self.size[1])
-
-        # self.center = (self.offset[0] + self.size[0] // 2, self.offset[1] + self.size[1] // 2)
 
         self.ratio = self.width / self.height
 
