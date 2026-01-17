@@ -72,7 +72,9 @@ class Room(pygame.Rect):
 
         super().__init__(self.offset[0], self.offset[1], self.size[0], self.size[1])
 
-        self.center = (self.offset[0] + self.size[0] // 2, self.offset[1] + self.size[1] // 2)
+        # self.center = (self.offset[0] + self.size[0] // 2, self.offset[1] + self.size[1] // 2)
+
+        self.ratio = self.width / self.height
 
         margin = config.thickness
         self.mask = pygame.Mask((self.size[0]+2*margin, self.size[1]+2*margin), fill=True)
@@ -102,11 +104,15 @@ class Room(pygame.Rect):
     
     def anim_pop(self):
         self.pop_timer = 2
-        self.scale_by_ip((100 + self.pop_timer) / 100)
+        self.animation_copy = self.inflate(2* config.thickness, 2* config.thickness)
     
-    def anim_tick(self, frame_time):
+    def anim_tick(self, viewport, frame_time):
         if self.pop_timer > 0:
             self.pop_timer -= frame_time
-            self.scale_by_ip((100 + self.pop_timer) / 100)
-
+            self.animation_copy.center = self.center
+            self.animation_copy.width -= (frame_time * config.thickness * 4)
+            self.animation_copy.height -= (frame_time * config.thickness * 4)
+            pygame.draw.rect(viewport, config.color["col1"], self.animation_copy)
+        else:
+            pass
 

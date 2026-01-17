@@ -36,7 +36,7 @@ class Doomcrawl:
 
             # self.viewport.blit(self.dungeon.texture, (0,0))
             for room in self.dungeon.rooms:
-                room.anim_tick(frame_time)
+                room.anim_tick(self.viewport, frame_time)
                 pygame.draw.rect(self.viewport, config.color["col1"], room)
 
             pygame.draw.rect(self.viewport, config.color["hilite1"], self.player)
