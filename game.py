@@ -53,6 +53,9 @@ class Doomcrawl:
             if event.type == KEYDOWN:
                 if event.key == pygame.K_r:
                     self.dungeon.add_room()
+            if event.type == KEYDOWN:
+                if event.key == pygame.K_t:
+                    self.bw = BowyerWatson(self.dungeon.get_room_centers())
 
 
     def process_key_input(self):

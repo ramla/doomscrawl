@@ -55,6 +55,12 @@ class Dungeon:
             return True
         return False
 
+    def get_room_centers(self):
+        centers = []
+        for room in self.rooms:
+            centers.append(room.center)
+        return centers
+
 
 class Room(pygame.Rect):
     def __init__(self, size=None, pos=None, center=None):
