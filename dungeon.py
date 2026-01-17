@@ -39,15 +39,16 @@ class Dungeon:
 
         while tries > 0:
             room = Room(size=size, pos=pos, center=center)
-            print(f"center {center}, size {room.size}, offset {room.offset}")
+            if config.room_debug:
+                print(f"center {center}, size {room.size}, offset {room.offset}")
             if not self.collision_mask.overlap(room.mask, room.get_mask_offset()):
                 self.collision_surface.blit(room.surface, room.offset)
                 self.render_collision_mask()
                 room.anim_pop_init()
                 self.rooms.append(room)
-                return True
             tries -= 1
-        return False
+        if config.room_debug:
+            print(f"room creation failed, tries = {tries}")
 
     def overlapping_existing(self, mask, offset):
         if self.collision_mask.overlap(mask, offset):

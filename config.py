@@ -1,6 +1,7 @@
 import pygame
 
 collision_debug = False
+room_debug = False
 
 viewport_x = 1800
 viewport_y = 1000
