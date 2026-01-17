@@ -6,6 +6,7 @@ from random import randint
 from dungeon import Dungeon
 from player import Player
 import config
+from bowyer_watson import BowyerWatson
 
 
 class Doomcrawl:
