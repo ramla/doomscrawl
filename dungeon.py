@@ -43,7 +43,7 @@ class Dungeon:
             if not self.collision_mask.overlap(room.mask, room.get_mask_offset()):
                 self.collision_surface.blit(room.surface, room.offset)
                 self.render_collision_mask()
-                room.anim_pop()
+                room.anim_pop_init()
                 self.rooms.append(room)
                 return True
             tries -= 1
@@ -99,11 +99,11 @@ class Room(pygame.Rect):
         y = self.offset[1] - config.thickness
         return (x,y)
     
-    def anim_pop(self):
+    def anim_pop_init(self):
         self.pop_timer = 2
         self.animation_copy = self.inflate(2* config.thickness, 2* config.thickness)
     
-    def anim_tick(self, viewport, frame_time):
+    def anim_pop_tick(self, viewport, frame_time):
         if self.pop_timer > 0:
             self.pop_timer -= frame_time
             self.animation_copy.center = self.center
