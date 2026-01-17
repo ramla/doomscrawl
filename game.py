@@ -13,7 +13,7 @@ class Doomcrawl:
         pygame.init()
         self.viewport = pygame.display.set_mode((config.viewport_x,config.viewport_y), pygame.RESIZABLE)
         pygame.display.set_caption('Doomscrawl')
-        
+
         self.dungeon = Dungeon((config.viewport_x, config.viewport_y))
         self.player = Player(self.dungeon.player_start_pos, (config.thickness, config.thickness))
 
@@ -34,7 +34,6 @@ class Doomcrawl:
 
             self.viewport.fill(config.color["bg"])
 
-            # self.viewport.blit(self.dungeon.texture, (0,0))
             for room in self.dungeon.rooms:
                 room.anim_tick(self.viewport, frame_time)
                 pygame.draw.rect(self.viewport, config.color["col1"], room)
@@ -46,7 +45,7 @@ class Doomcrawl:
                 self.player.draw_collision_overlay(self.viewport)
 
             pygame.display.flip()
-    
+
     def process_events(self):
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -54,7 +53,7 @@ class Doomcrawl:
             if event.type == KEYDOWN:
                 if event.key == pygame.K_r:
                     self.dungeon.add_room()
-                    
+
 
     def process_key_input(self):
         keys = pygame.key.get_pressed()
