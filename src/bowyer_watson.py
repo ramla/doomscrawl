@@ -8,7 +8,7 @@ class BowyerWatson:
                          )
         self.points = points
         self.triangulation = {
-            "verts":    super_triangle.copy(),
+            "verts":    [super_triangle[0],super_triangle[1],super_triangle[2]],
             "edges":    [
                 (super_triangle[0],super_triangle[1]),
                 (super_triangle[0],super_triangle[2]),
