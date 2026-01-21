@@ -13,9 +13,11 @@ class TestEdge(unittest.TestCase):
         self.v7 = Vertex(2, 5)
         self.v8 = Vertex(8, 3)
         self.e1 = Edge(self.v1, self.v2)
+        self.e1_2 = Edge(self.v2, self.v1)
         self.e2 = Edge(self.v2, self.v3)
         self.e3 = Edge(self.v1, self.v3)
         self.e4 = Edge(self.v4, self.v5)
+        self.e4_2 = Edge(self.v5, self.v4)
         self.e5 = Edge(self.v5, self.v6)
         self.e6 = Edge(self.v4, self.v6)
         self.e7 = Edge(self.v7, self.v8)
@@ -24,19 +26,26 @@ class TestEdge(unittest.TestCase):
         self.assertEqual(self.e1.get_midpoint(), Vertex(0.5, 0.5))
         self.assertEqual(self.e3.get_midpoint(), Vertex(0, 0))
 
-    def test_edge_nr_slope(self):
-        self.assertEqual(self.e1.get_nr_slope(), -1)
-        self.assertEqual(self.e4.get_nr_slope(), 3)
+    def test_edge_slope(self):
+        self.assertEqual(self.e1.get_slope(), -1)
+        self.assertEqual(self.e1_2.get_slope(), -1)
+        self.assertEqual(self.e4.get_slope(), 3)
 
-    def test_edge_intercept(self):
-        self.assertEqual(self.e7.get_intercept(), -11)
-        self.assertEqual(self.e1.get_intercept(), 1)
-        self.assertEqual(self.e4.get_intercept(), 0)
+    def test_edge_nr_slope(self):
+        self.assertEqual(self.e1_2.get_nr_slope(), 1)
+        self.assertEqual(self.e1.get_nr_slope(), 1)
+        self.assertAlmostEqual(self.e4_2.get_nr_slope(), -1/3)
+        self.assertAlmostEqual(self.e4.get_nr_slope(), -1/3)
+
+    def test_pb_intercept(self):
+        self.assertEqual(self.e7.get_pb_intercept(), -11)
+        self.assertEqual(self.e1.get_pb_intercept(), 0)
+        self.assertAlmostEqual(self.e4.get_pb_intercept(), 10/3)
 
     def test_edge_get_key(self):
         alt_e1 = Edge(self.v2, self.v1)
-        self.assertEqual(sorted((self.v1, self.v2)), self.e1.get_key())
-        self.assertEqual(sorted((self.v1, self.v2)), alt_e1.get_key())
+        self.assertEqual(tuple(sorted((self.v1, self.v2))), self.e1.get_key())
+        self.assertEqual(tuple(sorted((self.v1, self.v2))), alt_e1.get_key())
 
 
 class TestTriangle(unittest.TestCase):
@@ -64,12 +73,14 @@ class TestTriangle(unittest.TestCase):
         self.tri2 = Triangle(self.v4, self.v5, self.v6, self.edges)
 
     def test_triangle_circumcircle_radius(self):
-        self.assertEqual(self.tri1.get_circumcircle_radius(), 1)
-        self.assertEqual(self.tri2.get_circumcircle_radius(), 3)
+        self.assertAlmostEqual(self.tri1.get_circumcircle_radius(), 1)
+        self.assertAlmostEqual(self.tri2.get_circumcircle_radius(), 3)
 
     def test_triangle_circumcenter(self):
-        self.assertEqual(self.tri1.get_circumcenter(), Vertex(0, 0))
-        self.assertEqual(self.tri2.get_circumcenter(), Vertex(1, 3))
+        self.assertAlmostEqual(self.tri1.get_circumcenter().x, 0)
+        self.assertAlmostEqual(self.tri1.get_circumcenter().y, 0)
+        self.assertAlmostEqual(self.tri2.get_circumcenter().x, 1)
+        self.assertAlmostEqual(self.tri2.get_circumcenter().y, 3)
 
     def test_triangle_vertex_in_circumcircle(self):
         self.assertEqual(self.tri1.vertex_in_circumcircle(self.v5), True)

@@ -52,6 +52,9 @@ class Vertex:
     def __hash__(self):
         return hash((self.x, self.y))
 
+    def __repr__(self):
+        return f"Vertex({self.x}, {self.y})"
+
     def distance_from(self, vertex):
         return sqrt((self.x - vertex.x)**2 + (self.y - vertex.y)**2)
 
@@ -61,12 +64,13 @@ class Edge:
         self.vertex_a = vertex_a
         self.vertex_b = vertex_b
         self.midpoint = None
+        self.slope = None
         self.nr_slope = None
         self.intercept = None
 
     def __eq__(self, edge:"Edge"):
-        return (self.vertex_a == edge.vertex_a and self.vertex_b == self.vertex_b) \
-            or (self.vertex_a == self.vertex_b and self.vertex_b == self.vertex_a)
+        return (self.vertex_a == edge.vertex_a and self.vertex_b == edge.vertex_b) \
+            or (self.vertex_a == edge.vertex_b and self.vertex_b == edge.vertex_a)
 
     def get_key(self):
         return tuple(sorted((self.vertex_a, self.vertex_b)))
@@ -79,15 +83,34 @@ class Edge:
             self.midpoint = Vertex((self.vertex_a.x + self.vertex_b.x) / 2, ((self.vertex_a.y + self.vertex_b.y) / 2))
         return self.midpoint
 
+    def get_slope(self):
+        if not self.slope:
+            nominator = (self.vertex_a.y - self.vertex_b.y)
+            denominator = (self.vertex_a.x - self.vertex_b.x)
+            if denominator == 0:
+                nominator = (self.vertex_b.y - self.vertex_a.y)
+                denominator = (self.vertex_b.x - self.vertex_a.x)
+                if denominator == 0:
+                    self.slope = float("inf")
+                    return self.slope
+            self.slope = nominator / denominator
+        return self.slope
+
     def get_nr_slope(self):
         """Return the negative reciprocal of the edge's slope"""
         if not self.nr_slope:
-            self.nr_slope = -1 / (self.vertex_a.y + self.vertex_b.y) / (self.vertex_a.x + self.vertex_b.x)
+            if not self.slope:
+                self.get_slope()
+            if self.get_slope() == 0:
+                self.nr_slope = 0
+            else:
+                self.nr_slope = -1 / self.get_slope()
         return self.nr_slope
 
-    def get_intercept(self):
+    def get_pb_intercept(self):
+        """Return the y-intercept of the perpendicular bisector of the edge"""
         if not self.intercept:
-            self.intercept = self.get_midpoint().y - self.get_nr_slope()
+            self.intercept = self.get_midpoint().y - self.get_midpoint().x * self.get_nr_slope()
         return self.intercept
 
 class Triangle:
@@ -106,14 +129,16 @@ class Triangle:
         return tuple(sorted((self.vertex_a, self.vertex_b, self.vertex_c)))
 
     def get_edges(self):
-        return (self.edge_lookup[sorted((self.vertex_a, self.vertex_b))],
-                self.edge_lookup[sorted((self.vertex_a, self.vertex_c))],
-                self.edge_lookup[sorted((self.vertex_b, self.vertex_c))]
+        return (self.edge_lookup[tuple(sorted((self.vertex_a, self.vertex_b)))],
+                self.edge_lookup[tuple(sorted((self.vertex_a, self.vertex_c)))],
+                self.edge_lookup[tuple(sorted((self.vertex_b, self.vertex_c)))]
             )
 
     def get_circumcircle_radius(self):
         if not self.circumcircle_radius:
-            a, b, c = self.vertex_a, self.vertex_b, self.vertex_c
+            a = self.vertex_a.distance_from(self.vertex_b)
+            b = self.vertex_a.distance_from(self.vertex_c)
+            c = self.vertex_b.distance_from(self.vertex_c)
             self.circumcircle_radius = a*b*c / sqrt((a+b+c)*(b+c-a)*(c+a-b)*(a+b-c))
         return self.circumcircle_radius
 
@@ -136,13 +161,18 @@ class Triangle:
 
         """
         if not self.circumcenter:
-            edge_1, edge_2, _ = self.get_edges()
-            a_1 = edge_1.get_nr_slope()
-            c_1 = edge_1.get_intercept()
-            a_2 = edge_2.get_nr_slope()
-            c_2 = edge_2.get_intercept()
-            x = (c_1 - c_2) / (a_1 - a_2)
-            y = ((a_1 * c_2) - (a_2 * c_1)) / (a_1 - a_2)
+            edge_1, edge_2, edge_3 = self.get_edges()
+            a_1 = edge_1.get_slope()
+            c_1 = edge_1.get_pb_intercept()
+            a_2 = edge_2.get_slope()
+            c_2 = edge_2.get_pb_intercept()
+            det = a_1 - a_2
+            if det == 0:
+                a_1 = edge_3.get_slope()
+                c_1 = edge_3.get_pb_intercept()
+                det = a_1 - a_2
+            x = (c_1 - c_2) / det
+            y = ((a_1 * c_2) - (a_2 * c_1)) / det
             self.circumcenter = Vertex(x,y)
         return self.circumcenter
 
