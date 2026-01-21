@@ -4,26 +4,24 @@ import config
 
 class BowyerWatson:
     def __init__(self, points, max_x, max_y):
-        super_triangle = ((0,0), 
-                          (max_x * 2 + 1, 0),
-                          (0, max_y * 2 + 1)
-                         )
         self.points = points
-        self.verts = [super_triangle[0],super_triangle[1],super_triangle[2]]
+        super_verts = ( Vertex(0,0), 
+                        Vertex(max_x * 2 + 1, 0),
+                        Vertex(0, max_y * 2 + 1)
+                    )
+        super_edges = (Edge(super_verts[0], super_verts[1]),
+                            Edge(super_verts[1], super_verts[2]),
+                            Edge(super_verts[0], super_verts[2])
+                        )
         self.edges = {
-                self.get_edge_key(super_triangle[0], super_triangle[1]): Edge(super_triangle[0],super_triangle[1]),
-                self.get_edge_key(super_triangle[0], super_triangle[2]): Edge(super_triangle[0],super_triangle[2]),
-                self.get_edge_key(super_triangle[2], super_triangle[1]): Edge(super_triangle[2],super_triangle[1]),
+                super_edges[0].get_key(): super_edges[0],
+                super_edges[1].get_key(): super_edges[1],
+                super_edges[2].get_key(): super_edges[2]
                 }
-        self.triangles = {
-                self.get_triangle_key(super_triangle[0], super_triangle[1], super_triangle[2]): Triangle(super_triangle[0], super_triangle[1], super_triangle[2], self.edges)
-                }
-
-    def get_edge_key(vertex_a, vertex_b):
-        return sorted((vertex_a, vertex_b))
-
-    def get_triangle_key(vertex_a, vertex_b, vertex_c):
-        return sorted((vertex_a, vertex_b, vertex_c))
+        self.super_triangle = Triangle(super_verts[0], super_verts[1], super_verts[2], self.edges)
+        self.verts = []
+        self.verts.append(self.super_triangle.get_vertices())
+        self.triangles = {self.super_triangle.get_key(): self.super_triangle}
 
     def triangulate(self):
         for point in self.points:
@@ -43,6 +41,17 @@ class Vertex:
     def __eq__(self, vertex):
         return self.x == vertex.x and self.y == vertex.y
 
+    def __lt__(self, vertex):
+        if self.x < vertex.x:
+            return True
+        elif self.x > vertex.x:
+            return False
+        else:
+            return self.y < vertex.y
+    
+    def __hash__(self):
+        return hash((self.x, self.y))
+
     def distance_from(self, vertex):
         return sqrt((self.x - vertex.x)**2 + (self.y - vertex.y)**2)
 
@@ -51,32 +60,35 @@ class Edge:
     def __init__(self, vertex_a:Vertex, vertex_b:Vertex):
         self.vertex_a = vertex_a
         self.vertex_b = vertex_b
+        self.midpoint = None
+        self.nr_slope = None
+        self.intercept = None
 
     def __eq__(self, edge:"Edge"):
         return (self.vertex_a == edge.vertex_a and self.vertex_b == self.vertex_b) \
             or (self.vertex_a == self.vertex_b and self.vertex_b == self.vertex_a)
 
     def get_key(self):
-        return sorted((self.vertex_a, self.vertex_b))
+        return tuple(sorted((self.vertex_a, self.vertex_b)))
 
     def get_vertices(self):
         return (self.vertex_a, self.vertex_b)
 
     def get_midpoint(self):
         if not self.midpoint:
-            self.midpoint = Vertex((self.vertex_a[0] + self.vertex_b[0]) / 2, (self.vertex_a[1] + self.vertex_b[1] / 2))
+            self.midpoint = Vertex((self.vertex_a.x + self.vertex_b.x) / 2, ((self.vertex_a.y + self.vertex_b.y) / 2))
         return self.midpoint
 
     def get_nr_slope(self):
         """Return the negative reciprocal of the edge's slope"""
         if not self.nr_slope:
-            self.nr_slope = -1 / (self.vertex_a[1] + self.vertex_b[1]) / (self.vertex_a[0] + self.vertex_b[0])
+            self.nr_slope = -1 / (self.vertex_a.y + self.vertex_b.y) / (self.vertex_a.x + self.vertex_b.x)
         return self.nr_slope
 
     def get_intercept(self):
         if not self.intercept:
-            self.intercept = self.get_midpoint()[1] - (1 / self.get_slope())
-
+            self.intercept = self.get_midpoint().y - self.get_nr_slope()
+        return self.intercept
 
 class Triangle:
     def __init__(self, vertex_a, vertex_b, vertex_c, edge_lookup):
@@ -84,9 +96,14 @@ class Triangle:
         self.vertex_b = vertex_b
         self.vertex_c = vertex_c
         self.edge_lookup = edge_lookup
+        self.circumcenter = None
+        self.circumcircle_radius = None
 
     def get_vertices(self):
         return (self.vertex_a, self.vertex_b, self.vertex_c)
+
+    def get_key(self):
+        return tuple(sorted((self.vertex_a, self.vertex_b, self.vertex_c)))
 
     def get_edges(self):
         return (self.edge_lookup[sorted((self.vertex_a, self.vertex_b))],

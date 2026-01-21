@@ -10,12 +10,15 @@ class TestEdge(unittest.TestCase):
         self.v4 = Vertex(2, 6)
         self.v5 = Vertex(0, 0)
         self.v6 = Vertex(4, 2)
+        self.v7 = Vertex(2, 5)
+        self.v8 = Vertex(8, 3)
         self.e1 = Edge(self.v1, self.v2)
         self.e2 = Edge(self.v2, self.v3)
         self.e3 = Edge(self.v1, self.v3)
         self.e4 = Edge(self.v4, self.v5)
         self.e5 = Edge(self.v5, self.v6)
         self.e6 = Edge(self.v4, self.v6)
+        self.e7 = Edge(self.v7, self.v8)
 
     def test_edge_midpoint(self):
         self.assertEqual(self.e1.get_midpoint(), Vertex(0.5, 0.5))
@@ -26,13 +29,14 @@ class TestEdge(unittest.TestCase):
         self.assertEqual(self.e4.get_nr_slope(), 3)
 
     def test_edge_intercept(self):
+        self.assertEqual(self.e7.get_intercept(), -11)
         self.assertEqual(self.e1.get_intercept(), 1)
         self.assertEqual(self.e4.get_intercept(), 0)
 
     def test_edge_get_key(self):
         alt_e1 = Edge(self.v2, self.v1)
-        self.assertEqual(sorted(self.v1, self.v2), self.e1.get_key())
-        self.assertEqual(sorted(self.v1, self.v2), alt_e1.get_key())
+        self.assertEqual(sorted((self.v1, self.v2)), self.e1.get_key())
+        self.assertEqual(sorted((self.v1, self.v2)), alt_e1.get_key())
 
 
 class TestTriangle(unittest.TestCase):
@@ -77,7 +81,7 @@ class TestTriangle(unittest.TestCase):
 class TestBowyerWatson(unittest.TestCase):
     def setUp(self):
         self.points = []
-        self.empty_bw = BowyerWatson(self.points)
+        self.empty_bw = BowyerWatson(self.points, max_x=100, max_y=100)
 
     def test_empty_bw(self):
         self.assertEqual(len(self.empty_bw.points), 0)
