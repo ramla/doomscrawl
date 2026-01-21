@@ -56,21 +56,21 @@ class Edge:
         return (self.vertex_a == edge.vertex_a and self.vertex_b == self.vertex_b) \
             or (self.vertex_a == self.vertex_b and self.vertex_b == self.vertex_a)
 
-    def get_key(vertex_a, vertex_b):
-        return sorted((vertex_a, vertex_b))
+    def get_key(self):
+        return sorted((self.vertex_a, self.vertex_b))
 
     def get_vertices(self):
         return (self.vertex_a, self.vertex_b)
 
     def get_midpoint(self):
         if not self.midpoint:
-            self.midpoint = ((self.vertex_a[0] + self.vertex_b[0]) / 2, (self.vertex_a[1] + self.vertex_b[1] / 2))
+            self.midpoint = Vertex((self.vertex_a[0] + self.vertex_b[0]) / 2, (self.vertex_a[1] + self.vertex_b[1] / 2))
         return self.midpoint
 
     def get_nr_slope(self):
         """Return the negative reciprocal of the edge's slope"""
         if not self.nr_slope:
-            self.slope = (self.vertex_a[1] + self.vertex_b[1]) / (self.vertex_a[0] + self.vertex_b[0])
+            self.nr_slope = -1 / (self.vertex_a[1] + self.vertex_b[1]) / (self.vertex_a[0] + self.vertex_b[0])
         return self.nr_slope
 
     def get_intercept(self):
