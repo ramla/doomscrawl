@@ -84,7 +84,8 @@ class Edge:
 
     def get_midpoint(self):
         if not self.midpoint:
-            self.midpoint = Vertex((self.vertex_a.x + self.vertex_b.x) / 2, ((self.vertex_a.y + self.vertex_b.y) / 2))
+            self.midpoint = Vertex((self.vertex_a.x + self.vertex_b.x) / 2,
+                                   ((self.vertex_a.y + self.vertex_b.y) / 2))
         return self.midpoint
 
     def get_slope(self):

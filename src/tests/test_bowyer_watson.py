@@ -110,7 +110,8 @@ class TestBowyerWatson(unittest.TestCase):
         min_coords = (0, 0)
         max_coords = (100, 100)
         n = 10**2
-        self.bw_random_points_float = BowyerWatson(self.get_random_points_float(n, min_coords, max_coords),
+        self.bw_random_points_float = BowyerWatson(self.get_random_points_float(n, min_coords, 
+                                                                                   max_coords),
                                                    max_x=max_coords[0], max_y=max_coords[1])
 
     def get_random_points_float(self, n, min_coords, max_coords):
