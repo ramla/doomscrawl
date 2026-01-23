@@ -66,7 +66,11 @@ class Edge:
         self.midpoint = None
         self.slope = None
         self.nr_slope = None
-        self.intercept = None
+        self.pb_intercept = None
+        self.length = None
+
+    def __repr__(self):
+        return f"Edge{self.get_key()}"
 
     def __eq__(self, edge:"Edge"):
         return (self.vertex_a == edge.vertex_a and self.vertex_b == edge.vertex_b) \
@@ -96,8 +100,9 @@ class Edge:
             self.slope = nominator / denominator
         return self.slope
 
-    def get_nr_slope(self):
-        """Return the negative reciprocal of the edge's slope"""
+    def get_pb_slope(self):
+        """Return the negative reciprocal of the edge's slope, which is the
+        perpendicular bisector's slope"""
         if not self.nr_slope:
             if not self.slope:
                 self.get_slope()
@@ -109,9 +114,14 @@ class Edge:
 
     def get_pb_intercept(self):
         """Return the y-intercept of the perpendicular bisector of the edge"""
-        if not self.intercept:
-            self.intercept = self.get_midpoint().y - self.get_midpoint().x * self.get_nr_slope()
-        return self.intercept
+        if not self.pb_intercept:
+            self.pb_intercept = self.get_midpoint().y - self.get_midpoint().x * self.get_pb_slope()
+        return self.pb_intercept
+
+    def get_length(self):
+        if not self.length:
+            self.length = self.vertex_a.distance_from(self.vertex_b)
+        return self.length
 
 class Triangle:
     def __init__(self, vertex_a, vertex_b, vertex_c, edge_lookup):
@@ -121,6 +131,9 @@ class Triangle:
         self.edge_lookup = edge_lookup
         self.circumcenter = None
         self.circumcircle_radius = None
+
+    def __repr__(self):
+        return  f"Triangle{self.vertex_a}{self.vertex_b}{self.vertex_c}"
 
     def get_vertices(self):
         return (self.vertex_a, self.vertex_b, self.vertex_c)
@@ -136,9 +149,10 @@ class Triangle:
 
     def get_circumcircle_radius(self):
         if not self.circumcircle_radius:
-            a = self.vertex_a.distance_from(self.vertex_b)
-            b = self.vertex_a.distance_from(self.vertex_c)
-            c = self.vertex_b.distance_from(self.vertex_c)
+            sides = []
+            for edge in self.get_edges():
+                sides.append(edge.get_length())
+            a, b, c = sides
             self.circumcircle_radius = a*b*c / sqrt((a+b+c)*(b+c-a)*(c+a-b)*(a+b-c))
         return self.circumcircle_radius
 
@@ -162,16 +176,16 @@ class Triangle:
         """
         if not self.circumcenter:
             edge_1, edge_2, edge_3 = self.get_edges()
-            a_1 = edge_1.get_slope()
+            a_1 = edge_1.get_pb_slope()
             c_1 = edge_1.get_pb_intercept()
-            a_2 = edge_2.get_slope()
+            a_2 = edge_2.get_pb_slope()
             c_2 = edge_2.get_pb_intercept()
             det = a_1 - a_2
             if det == 0:
                 a_1 = edge_3.get_slope()
                 c_1 = edge_3.get_pb_intercept()
                 det = a_1 - a_2
-            x = (c_1 - c_2) / det
+            x = (c_2 - c_1) / det
             y = ((a_1 * c_2) - (a_2 * c_1)) / det
             self.circumcenter = Vertex(x,y)
         return self.circumcenter

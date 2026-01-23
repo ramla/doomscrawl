@@ -1,5 +1,6 @@
 import unittest
 from bowyer_watson import BowyerWatson, Vertex, Edge, Triangle
+from math import sqrt
 
 
 class TestEdge(unittest.TestCase):
@@ -31,11 +32,11 @@ class TestEdge(unittest.TestCase):
         self.assertEqual(self.e1_2.get_slope(), -1)
         self.assertEqual(self.e4.get_slope(), 3)
 
-    def test_edge_nr_slope(self):
-        self.assertEqual(self.e1_2.get_nr_slope(), 1)
-        self.assertEqual(self.e1.get_nr_slope(), 1)
-        self.assertAlmostEqual(self.e4_2.get_nr_slope(), -1/3)
-        self.assertAlmostEqual(self.e4.get_nr_slope(), -1/3)
+    def test_edge_pb_slope(self):
+        self.assertEqual(self.e1_2.get_pb_slope(), 1)
+        self.assertEqual(self.e1.get_pb_slope(), 1)
+        self.assertAlmostEqual(self.e4_2.get_pb_slope(), -1/3)
+        self.assertAlmostEqual(self.e4.get_pb_slope(), -1/3)
 
     def test_pb_intercept(self):
         self.assertEqual(self.e7.get_pb_intercept(), -11)
@@ -74,7 +75,7 @@ class TestTriangle(unittest.TestCase):
 
     def test_triangle_circumcircle_radius(self):
         self.assertAlmostEqual(self.tri1.get_circumcircle_radius(), 1)
-        self.assertAlmostEqual(self.tri2.get_circumcircle_radius(), 3)
+        self.assertAlmostEqual(self.tri2.get_circumcircle_radius(), sqrt(10))
 
     def test_triangle_circumcenter(self):
         self.assertAlmostEqual(self.tri1.get_circumcenter().x, 0)
