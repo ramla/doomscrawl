@@ -119,10 +119,7 @@ class Edge:
             slope = self.get_slope()
             midpoint = self.get_midpoint()
             if slope == 0:
-                if midpoint.x == 0:
-                    self.pb_intercept = midpoint.y
-                else:
-                    self.pb_intercept = None
+                self.pb_intercept = midpoint.y
             else:
                 self.pb_intercept = midpoint.y - midpoint.x * self.get_pb_slope()
         return self.pb_intercept
@@ -205,8 +202,6 @@ class Triangle:
         valid_edges = []
         for edge in edges:
             if edge.get_pb_slope() == float("inf") or edge.get_pb_slope() == float("-inf"):
-                continue
-            if edge.get_pb_intercept() == None:
                 continue
             valid_edges.append(edge)
         return valid_edges

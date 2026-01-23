@@ -50,7 +50,7 @@ class TestEdge(unittest.TestCase):
         self.assertEqual(self.e7.get_pb_intercept(), -11)
         self.assertEqual(self.e1.get_pb_intercept(), 0)
         self.assertAlmostEqual(self.e4.get_pb_intercept(), 10/3)
-        self.assertEqual(self.e8.get_pb_intercept(), None)
+        self.assertEqual(self.e8.get_pb_intercept(), 0)
         self.assertEqual(self.e9.get_pb_intercept(), 0.5)
 
     def test_edge_get_key(self):
