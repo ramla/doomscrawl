@@ -1,10 +1,12 @@
 import unittest
 from bowyer_watson import BowyerWatson, Vertex, Edge, Triangle
 from math import sqrt
+import random
 
 
 class TestEdge(unittest.TestCase):
     def setUp(self):
+        self.v0 = Vertex(0, 0)
         self.v1 = Vertex(1, 0)
         self.v2 = Vertex(0, 1)
         self.v3 = Vertex(-1, 0)
@@ -22,6 +24,8 @@ class TestEdge(unittest.TestCase):
         self.e5 = Edge(self.v5, self.v6)
         self.e6 = Edge(self.v4, self.v6)
         self.e7 = Edge(self.v7, self.v8)
+        self.e8 = Edge(self.v0, self.v1)
+        self.e9 = Edge(self.v0, self.v2)
 
     def test_edge_midpoint(self):
         self.assertEqual(self.e1.get_midpoint(), Vertex(0.5, 0.5))
@@ -31,17 +35,23 @@ class TestEdge(unittest.TestCase):
         self.assertEqual(self.e1.get_slope(), -1)
         self.assertEqual(self.e1_2.get_slope(), -1)
         self.assertEqual(self.e4.get_slope(), 3)
+        self.assertEqual(self.e8.get_slope(), 0)
+        self.assertEqual(self.e9.get_slope(), float("inf"))
 
     def test_edge_pb_slope(self):
         self.assertEqual(self.e1_2.get_pb_slope(), 1)
         self.assertEqual(self.e1.get_pb_slope(), 1)
         self.assertAlmostEqual(self.e4_2.get_pb_slope(), -1/3)
         self.assertAlmostEqual(self.e4.get_pb_slope(), -1/3)
+        self.assertEqual(self.e8.get_pb_slope(), float("inf"))
+        self.assertEqual(self.e9.get_pb_slope(), 0)
 
     def test_pb_intercept(self):
         self.assertEqual(self.e7.get_pb_intercept(), -11)
         self.assertEqual(self.e1.get_pb_intercept(), 0)
         self.assertAlmostEqual(self.e4.get_pb_intercept(), 10/3)
+        self.assertEqual(self.e8.get_pb_intercept(), None)
+        self.assertEqual(self.e9.get_pb_intercept(), 0.5)
 
     def test_edge_get_key(self):
         alt_e1 = Edge(self.v2, self.v1)
@@ -92,8 +102,23 @@ class TestTriangle(unittest.TestCase):
 
 class TestBowyerWatson(unittest.TestCase):
     def setUp(self):
-        self.points = []
-        self.empty_bw = BowyerWatson(self.points, max_x=100, max_y=100)
+        self.empty_bw = BowyerWatson([], max_x=100, max_y=100)
+
+        hard_points = [(0,0), (1,0), (2,0), (1,1), (2,2), (1,1e-12), (2,2e-12)]
+        self.bw_hard_points = BowyerWatson(hard_points, max_x=100, max_y=100)
+
+        min_coords = (0, 0)
+        max_coords = (100, 100)
+        n = 10**2
+        self.bw_random_points_float = BowyerWatson(self.get_random_points_float(n, min_coords, max_coords),
+                                                   max_x=max_coords[0], max_y=max_coords[1])
+
+    def get_random_points_float(self, n, min_coords, max_coords):
+        return [(random.uniform(min_coords[0],max_coords[0]),
+                 random.uniform(min_coords[1],max_coords[1])) for _ in range(n)]
 
     def test_empty_bw(self):
         self.assertEqual(len(self.empty_bw.points), 0)
+    
+    def test_hard_points(self):
+        pass

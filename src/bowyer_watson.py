@@ -65,7 +65,7 @@ class Edge:
         self.vertex_b = vertex_b
         self.midpoint = None
         self.slope = None
-        self.nr_slope = None
+        self.pb_slope = None
         self.pb_intercept = None
         self.length = None
 
@@ -103,19 +103,27 @@ class Edge:
     def get_pb_slope(self):
         """Return the negative reciprocal of the edge's slope, which is the
         perpendicular bisector's slope"""
-        if not self.nr_slope:
+        if not self.pb_slope:
             if not self.slope:
                 self.get_slope()
             if self.get_slope() == 0:
-                self.nr_slope = 0
+                self.pb_slope = float("inf")
             else:
-                self.nr_slope = -1 / self.get_slope()
-        return self.nr_slope
+                self.pb_slope = -1 / self.get_slope()
+        return self.pb_slope
 
     def get_pb_intercept(self):
         """Return the y-intercept of the perpendicular bisector of the edge"""
         if not self.pb_intercept:
-            self.pb_intercept = self.get_midpoint().y - self.get_midpoint().x * self.get_pb_slope()
+            slope = self.get_slope()
+            midpoint = self.get_midpoint()
+            if slope == 0:
+                if midpoint.x == 0:
+                    self.pb_intercept = midpoint.y
+                else:
+                    self.pb_intercept = None
+            else:
+                self.pb_intercept = midpoint.y - midpoint.x * self.get_pb_slope()
         return self.pb_intercept
 
     def get_length(self):
@@ -175,16 +183,14 @@ class Triangle:
 
         """
         if not self.circumcenter:
-            edge_1, edge_2, edge_3 = self.get_edges()
-            a_1 = edge_1.get_pb_slope()
-            c_1 = edge_1.get_pb_intercept()
-            a_2 = edge_2.get_pb_slope()
-            c_2 = edge_2.get_pb_intercept()
+            edges = self.select_edges_for_circumcenter_f()
+            a_1 = edges[0].get_pb_slope()
+            c_1 = edges[0].get_pb_intercept()
+            a_2 = edges[1].get_pb_slope()
+            c_2 = edges[1].get_pb_intercept()
             det = a_1 - a_2
             if det == 0:
-                a_1 = edge_3.get_slope()
-                c_1 = edge_3.get_pb_intercept()
-                det = a_1 - a_2
+                print("HELP!!!!!!!!!!!!")
             x = (c_2 - c_1) / det
             y = ((a_1 * c_2) - (a_2 * c_1)) / det
             self.circumcenter = Vertex(x,y)
@@ -192,3 +198,14 @@ class Triangle:
 
     def vertex_in_circumcircle(self, vertex):
         return self.get_circumcenter().distance_from(vertex) <= self.get_circumcircle_radius()
+
+    def select_edges_for_circumcenter_f(self):
+        edges = self.get_edges()
+        valid_edges = []
+        for edge in edges:
+            if edge.get_pb_slope() == float("inf") or edge.get_pb_slope() == float("-inf"):
+                continue
+            if edge.get_pb_intercept() == None:
+                continue
+            valid_edges.append(edge)
+        return valid_edges
