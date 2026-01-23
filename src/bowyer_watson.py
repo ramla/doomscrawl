@@ -5,32 +5,65 @@ import config
 class BowyerWatson:
     def __init__(self, points, max_x, max_y):
         self.points = points
-        super_verts = ( Vertex(0,0), 
+        self.super_verts = ( Vertex(0,0), 
                         Vertex(max_x * 2 + 1, 0),
                         Vertex(0, max_y * 2 + 1)
                     )
-        super_edges = (Edge(super_verts[0], super_verts[1]),
-                            Edge(super_verts[1], super_verts[2]),
-                            Edge(super_verts[0], super_verts[2])
+        super_edges = (Edge(self.super_verts[0], self.super_verts[1]),
+                            Edge(self.super_verts[1], self.super_verts[2]),
+                            Edge(self.super_verts[0], self.super_verts[2])
                         )
         self.edges = {
                 super_edges[0].get_key(): super_edges[0],
                 super_edges[1].get_key(): super_edges[1],
                 super_edges[2].get_key(): super_edges[2]
                 }
-        self.super_triangle = Triangle(super_verts[0], super_verts[1], super_verts[2], self.edges)
+        self.triangles = {}
+        self.new_triangle(*self.super_verts)
         self.verts = []
         self.verts.append(self.super_triangle.get_vertices())
-        self.triangles = {self.super_triangle.get_key(): self.super_triangle}
+        pass #visualise super triangle
 
     def triangulate(self):
         for point in self.points:
+            new_vertex = Vertex(point[0],point[1])
             bad_triangles = set()
+            self.verts.append(new_vertex)
+            #visualise new vertex
             for triangle in self.triangles:
-                if triangle.vertex_in_circumcircle(triangle, point):
+                if triangle.vertex_in_circumcircle(triangle, new_vertex):
                     bad_triangles.add(triangle)
                     for edge in triangle.get_edges():
-                        pass
+                        pass #visualise bad triangle
+            bad_tri_edgecount = {}
+            for triangle in bad_triangles:
+                for edge in triangle.get_edges():
+                    key = edge.get_key() 
+                    if not key in bad_tri_edgecount:
+                        bad_tri_edgecount[key] = 0
+                    bad_tri_edgecount += 1
+                    #visualise found edges
+            polygon = [self.edges[key] for key, count in bad_tri_edgecount.items() if count == 1]
+            #visualise polygon
+            for triangle in bad_triangles:
+                self.remove_triangle(triangle)
+            for edge in polygon:
+                vertex_a, vertex_b = edge.get_vertices()
+                self.add_triangle(vertex_a, vertex_b, new_vertex)
+        for triangle in self.triangles:
+            for vertex in self.super_verts:
+                #visualise super vertex?
+                if vertex in triangle.get_vertices():
+                    self.remove_triangle(triangle)
+
+    def add_triangle(self, vertex_a, vertex_b, vertex_c):
+        triangle = Triangle(vertex_a, vertex_b, vertex_c, self.edges)
+        self.triangles[triangle.get_key()] = triangle
+        #visualise new triangle
+
+    def remove_triangle(self, triangle):
+        pass
+        #visualise (bad, parameter?) triangle removal
 
 
 class Vertex:
@@ -198,6 +231,7 @@ class Triangle:
         return self.get_circumcenter().distance_from(vertex) <= self.get_circumcircle_radius()
 
     def select_edges_for_circumcenter_f(self):
+        """Edges with perpendicular bisectors on lines of form y = 0x + c will be omitted"""
         edges = self.get_edges()
         valid_edges = []
         for edge in edges:
