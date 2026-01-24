@@ -19,9 +19,10 @@ class BowyerWatson:
                 super_edges[2].get_key(): super_edges[2]
                 }
         self.triangles = {}
-        self.new_triangle(*self.super_verts)
+        self.add_triangle(*self.super_verts)
         self.verts = []
-        self.verts.append(self.super_triangle.get_vertices())
+        self.verts += list(self.super_verts)
+        print(self.verts)
         pass #visualise super triangle
 
     def triangulate(self):
