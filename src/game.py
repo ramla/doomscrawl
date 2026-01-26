@@ -1,13 +1,12 @@
 import pygame
 from pygame.locals import *
 import sys
-from random import randint
-from functools import partial
 
-from dungeon import Dungeon, Visualizer
+from dungeon import Dungeon
 from player import Player
 import config
-from bowyer_watson import BowyerWatson, Vertex
+from bowyer_watson import BowyerWatson
+from visualizer import Visualizer
 
 
 class Doomcrawl:
@@ -16,10 +15,11 @@ class Doomcrawl:
         self.viewport = pygame.display.set_mode((config.viewport_x,config.viewport_y),
                                                 pygame.RESIZABLE)
         pygame.display.set_caption('Doomscrawl')
+        self.visualizer = Visualizer(self.viewport)
 
         self.dungeon = Dungeon((config.viewport_x, config.viewport_y))
         self.player = Player(self.dungeon.player_start_pos, (config.thickness, config.thickness))
-        self.visualizer = Visualizer(self.viewport)
+        self.bw = None
 
     def start(self):
         self.loop(config.target_fps)
@@ -41,7 +41,6 @@ class Doomcrawl:
             for room in self.dungeon.rooms:
                 room.anim_pop_tick(self.viewport, frame_time)
                 pygame.draw.rect(self.viewport, config.color["col1"], room)
-                self.visualizer.event_queue.put(item=(partial(self.visualizer.new_vertex, Vertex(room.x, room.y))))
 
             self.visualizer.visualize(frame_time)
 
@@ -62,8 +61,13 @@ class Doomcrawl:
                     self.dungeon.add_room()
             if event.type == KEYDOWN:
                 if event.key == pygame.K_t:
-                    self.bw = BowyerWatson(self.dungeon.get_room_centers())
-
+                    if not self.bw:
+                        self.bw = BowyerWatson(self.dungeon.get_room_centers(),
+                                               config.viewport_x*2+1,
+                                               config.viewport_y*2+1,
+                                               self.visualizer.event_queue)
+                    else:
+                        self.bw.triangulate()
 
     def process_key_input(self):
         keys = pygame.key.get_pressed()

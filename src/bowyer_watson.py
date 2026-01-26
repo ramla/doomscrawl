@@ -1,9 +1,10 @@
 from math import sqrt
 import config
-
+from operator import methodcaller
 
 class BowyerWatson:
-    def __init__(self, points, max_x, max_y):
+    def __init__(self, points, max_x, max_y, visualizer_queue=None):
+        self.visualizer_queue = visualizer_queue
         self.points = points
         self.super_verts = ( Vertex(0,0), 
                         Vertex(max_x * 2 + 1, 0),
@@ -22,8 +23,9 @@ class BowyerWatson:
         self.add_triangle(*self.super_verts)
         self.verts = []
         self.verts += list(self.super_verts)
-        print(self.verts)
-        pass #visualise super triangle
+        if self.visualizer_queue:
+            for vertex in self.super_verts:
+                self.visualize_new(vertex)
 
     def triangulate(self):
         for point in self.points:
@@ -31,10 +33,14 @@ class BowyerWatson:
             bad_triangles = set()
             self.verts.append(new_vertex)
             #visualise new vertex
-            for triangle in self.triangles:
-                if triangle.vertex_in_circumcircle(triangle, new_vertex):
+            self.visualize_new(new_vertex)
+            for triangle in self.triangles.values():
+                if triangle.vertex_in_circumcircle(new_vertex):
                     bad_triangles.add(triangle)
                     for edge in triangle.get_edges():
+                        if not edge.get_key() in self.edges:
+                            self.edges[edge.get_key()] = edge
+                        self.visualize_new(edge)
                         pass #visualise bad triangle
             bad_tri_edgecount = {}
             for triangle in bad_triangles:
@@ -42,16 +48,19 @@ class BowyerWatson:
                     key = edge.get_key() 
                     if not key in bad_tri_edgecount:
                         bad_tri_edgecount[key] = 0
-                    bad_tri_edgecount += 1
+                    bad_tri_edgecount[key] += 1
                     #visualise found edges
+                    self.visualize_new(edge)
             polygon = [self.edges[key] for key, count in bad_tri_edgecount.items() if count == 1]
             #visualise polygon
+            for edge in polygon:
+                self.visualize_new(edge)
             for triangle in bad_triangles:
                 self.remove_triangle(triangle)
             for edge in polygon:
                 vertex_a, vertex_b = edge.get_vertices()
                 self.add_triangle(vertex_a, vertex_b, new_vertex)
-        for triangle in self.triangles:
+        for triangle in self.triangles.values():
             for vertex in self.super_verts:
                 #visualise super vertex?
                 if vertex in triangle.get_vertices():
@@ -60,12 +69,26 @@ class BowyerWatson:
     def add_triangle(self, vertex_a, vertex_b, vertex_c):
         triangle = Triangle(vertex_a, vertex_b, vertex_c, self.edges)
         self.triangles[triangle.get_key()] = triangle
+        edges = (Edge(vertex_a, vertex_b),
+                 Edge(vertex_a, vertex_c),
+                 Edge(vertex_b, vertex_c)
+                )
+        for edge in edges:
+            self.edges[edge.get_key()] = edge
         #visualise new triangle
+        self.visualize_new(triangle)
 
     def remove_triangle(self, triangle):
         pass
         #visualise (bad, parameter?) triangle removal
 
+    def visualize_new(self, object):
+        if isinstance(object, Vertex):
+            self.visualizer_queue.put(methodcaller("new_vertex", object))
+        elif isinstance(object, Edge):
+            self.visualizer_queue.put(methodcaller("new_edge", object))
+        elif isinstance(object, Triangle):
+            self.visualizer_queue.put(methodcaller("new_triangle", object))
 
 class Vertex:
     def __init__(self, x, y):

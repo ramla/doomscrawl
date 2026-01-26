@@ -36,7 +36,7 @@ class Dungeon:
         if fail_allowed:
             tries = 10
         else:
-            tries = 99999
+            tries = 9999
 
         while tries > 0:
             room = Room(size=size, pos=pos, center=center)
@@ -47,6 +47,7 @@ class Dungeon:
                 self.render_collision_mask()
                 room.anim_pop_init()
                 self.rooms.append(room)
+                return
             tries -= 1
         if config.room_debug:
             print(f"room creation failed, tries = {tries}")

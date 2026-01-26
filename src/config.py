@@ -22,4 +22,11 @@ color = {
 room_size_min = (thickness*3, thickness*3)
 room_size_max = (viewport_x//4, viewport_y//3)
 
+visualisation_delay_min = 1/60
+vertex_anim_duration = 0.3
+vertex_anim_pop_scale = 1.5
+vertex_radius = thickness/3
+edge_width = thickness/7
+triangle_width = thickness/5
+
 player_speed = 20 * thickness
