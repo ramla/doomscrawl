@@ -2,11 +2,12 @@ import pygame
 from pygame.locals import *
 import sys
 from random import randint
+from functools import partial
 
-from dungeon import Dungeon
+from dungeon import Dungeon, Visualizer
 from player import Player
 import config
-from bowyer_watson import BowyerWatson
+from bowyer_watson import BowyerWatson, Vertex
 
 
 class Doomcrawl:
@@ -18,6 +19,7 @@ class Doomcrawl:
 
         self.dungeon = Dungeon((config.viewport_x, config.viewport_y))
         self.player = Player(self.dungeon.player_start_pos, (config.thickness, config.thickness))
+        self.visualizer = Visualizer(self.viewport)
 
     def start(self):
         self.loop(config.target_fps)
@@ -39,6 +41,9 @@ class Doomcrawl:
             for room in self.dungeon.rooms:
                 room.anim_pop_tick(self.viewport, frame_time)
                 pygame.draw.rect(self.viewport, config.color["col1"], room)
+                self.visualizer.event_queue.put(item=(partial(self.visualizer.new_vertex, Vertex(room.x, room.y))))
+
+            self.visualizer.visualize(frame_time)
 
             pygame.draw.rect(self.viewport, config.color["hilite1"], self.player)
 
