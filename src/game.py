@@ -59,7 +59,6 @@ class Doomcrawl:
             if event.type == KEYDOWN:
                 if event.key == pygame.K_r:
                     self.dungeon.add_room()
-            if event.type == KEYDOWN:
                 if event.key == pygame.K_t:
                     if not self.bw:
                         self.bw = BowyerWatson(self.dungeon.get_room_centers(),
@@ -68,6 +67,10 @@ class Doomcrawl:
                                                self.visualizer.event_queue)
                     else:
                         self.bw.triangulate()
+                if event.key == pygame.K_f:
+                    for list in self.visualizer.list_entities():
+                        print(list)
+
 
     def process_key_input(self):
         keys = pygame.key.get_pressed()

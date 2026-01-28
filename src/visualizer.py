@@ -3,7 +3,6 @@ import queue
 from operator import methodcaller
 import config
 
-
 class Visualizer:
     def __init__(self, viewport):
         self.event_queue = queue.Queue()
@@ -24,6 +23,17 @@ class Visualizer:
         for entity in self.entities.values():
             entity.draw(self.viewport, frame_time)
 
+    def list_entities(self):
+        verts, edges, tris = [], [], []
+        for entity in self.entities.values():
+            if isinstance(entity, VisualVertex):
+                verts.append(entity)
+            if isinstance(entity, VisualEdge):
+                edges.append(entity)
+            if isinstance(entity, VisualTriangle):
+                tris.append(entity)
+        return verts, edges, tris
+
     def new_vertex(self, vertex):
         self.entities[vertex] = VisualVertex(center=(vertex.x, vertex.y),
                                                      radius=config.vertex_radius,
@@ -42,9 +52,23 @@ class Visualizer:
                                                  color=config.color["col2"])
         # self.animate_entity(triangle, methodcaller("anim_new"))
         
+    def remove_edge(self, edge):
+        if config.visualizer_debug:
+            print("removing edge",edge.get_key())
+        try:
+            self.entities.pop(edge.get_key())
+        except KeyError:
+            if config.visualizer_debug:
+                print("visualizer.remove_triangle() KeyError:",edge)
 
-    def remove_entity(self, key):
-        self.entities.pop(key)
+    def remove_triangle(self, triangle):
+        if config.visualizer_debug:
+            print("removing tri", triangle)
+        try:
+            self.entities.pop(triangle)
+        except KeyError:
+            if config.visualizer_debug:
+                print("visualizer.remove_triangle() KeyError:",triangle)
 
     def animate_entity(self, key, anim_func, next_event_delay=None):
         if next_event_delay == None:
@@ -60,6 +84,9 @@ class VisualVertex:
         self.radius_rate = 0
         self.color = color
         self.accumulator = 0
+
+    def __repr__(self):
+        return f"VVert{self.center}"
 
     def draw(self, viewport, frame_time):
         if self.accumulator > 0:
@@ -84,6 +111,9 @@ class VisualEdge:
     def draw(self, viewport, frame_time):
         pygame.draw.line(viewport, self.color, self.a, self.b, int(self.width))
 
+    def __repr__(self):
+        return f"VEdge{self.a}-{self.b}"
+
 class VisualTriangle:
     def __init__(self, triangle, width, color):
         self.triangle = triangle
@@ -93,3 +123,6 @@ class VisualTriangle:
 
     def draw(self, viewport, frame_time):
         pygame.draw.polygon(viewport, self.color, self.points, int(self.width))
+
+    def __repr__(self):
+        return f"VTri{self.triangle.get_key()}"

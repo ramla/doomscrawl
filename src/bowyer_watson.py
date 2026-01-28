@@ -19,10 +19,9 @@ class BowyerWatson:
                 super_edges[1].get_key(): super_edges[1],
                 super_edges[2].get_key(): super_edges[2]
                 }
+        self.triangles_with_edge = {}
         self.triangles = {}
         self.add_triangle(*self.super_verts)
-        self.verts = []
-        self.verts += list(self.super_verts)
         if self.visualizer_queue:
             for vertex in self.super_verts:
                 self.visualize_new(vertex)
@@ -31,7 +30,6 @@ class BowyerWatson:
         for point in self.points:
             new_vertex = Vertex(point[0],point[1])
             bad_triangles = set()
-            self.verts.append(new_vertex)
             #visualise new vertex
             self.visualize_new(new_vertex)
             for triangle in self.triangles.values():
@@ -60,7 +58,7 @@ class BowyerWatson:
             for edge in polygon:
                 vertex_a, vertex_b = edge.get_vertices()
                 self.add_triangle(vertex_a, vertex_b, new_vertex)
-        for triangle in self.triangles.values():
+        for triangle in list(self.triangles.values()):
             for vertex in self.super_verts:
                 #visualise super vertex?
                 if vertex in triangle.get_vertices():
@@ -74,13 +72,41 @@ class BowyerWatson:
                  Edge(vertex_b, vertex_c)
                 )
         for edge in edges:
-            self.edges[edge.get_key()] = edge
+            key = edge.get_key()
+            self.edges[key] = edge
+            if not key in self.triangles_with_edge:
+                self.triangles_with_edge[key] = 0
+            self.triangles_with_edge[key] += 1
         #visualise new triangle
         self.visualize_new(triangle)
 
     def remove_triangle(self, triangle):
-        pass
+        if not triangle.get_key() in self.triangles:
+            return triangle
+        self.triangles.pop(triangle.get_key())
+        edges = triangle.get_edges()
+        for edge in edges:
+            key = edge.get_key()
+            self.edges[key] = edge
+            self.triangles_with_edge[key] -= 1
+            if self.triangles_with_edge[key] == 0:
+                try:
+                    self.visualize_remove(edge)
+                except KeyError:
+                    if config.visualizer_debug:
+                        print("bw.KeyError:",edge)
+        #visualise triangle removal
+        self.visualize_remove(triangle)
+
         #visualise (bad, parameter?) triangle removal
+
+    def visualize_remove(self, object):
+        if isinstance(object, Vertex):
+            self.visualizer_queue.put(methodcaller("remove_vertex", object))
+        elif isinstance(object, Edge):
+            self.visualizer_queue.put(methodcaller("remove_edge", object))
+        elif isinstance(object, Triangle):
+            self.visualizer_queue.put(methodcaller("remove_triangle", object))
 
     def visualize_new(self, object):
         if isinstance(object, Vertex):
