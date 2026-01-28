@@ -62,8 +62,6 @@ class Doomcrawl:
                 if event.key == pygame.K_t:
                     if not self.bw:
                         self.bw = BowyerWatson(self.dungeon.get_room_centers(),
-                                               config.viewport_x*2+1,
-                                               config.viewport_y*2+1,
                                                self.visualizer.event_queue)
                     else:
                         self.bw.triangulate()

@@ -9,6 +9,7 @@ viewport_y = 1000
 target_fps = 60
 
 thickness = min(viewport_x, viewport_y) // 40
+super_tri_margin = thickness * 2
 
 color = {
     "light1":   pygame.Color(235,235,235),  # platinum

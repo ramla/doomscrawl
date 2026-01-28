@@ -3,28 +3,21 @@ import config
 from operator import methodcaller
 
 class BowyerWatson:
-    def __init__(self, points, max_x, max_y, visualizer_queue=None):
+    def __init__(self, points, visualizer_queue=None):
         self.visualizer_queue = visualizer_queue
-        self.points = points
-        self.super_verts = ( Vertex(0,0), 
-                        Vertex(max_x * 2 + 1, 0),
-                        Vertex(0, max_y * 2 + 1)
-                    )
-        super_edges = (Edge(self.super_verts[0], self.super_verts[1]),
-                            Edge(self.super_verts[1], self.super_verts[2]),
-                            Edge(self.super_verts[0], self.super_verts[2])
-                        )
-        self.edges = {
-                super_edges[0].get_key(): super_edges[0],
-                super_edges[1].get_key(): super_edges[1],
-                super_edges[2].get_key(): super_edges[2]
-                }
-        self.triangles_with_edge = {}
+        self.points = []
+        self.super_verts = []
+        self.edges = {}
         self.triangles = {}
-        self.add_triangle(*self.super_verts)
+        self.triangles_with_edge = {}
+        self.add_points(points)
         if self.visualizer_queue:
             for vertex in self.super_verts:
                 self.visualize_new(vertex)
+
+    def add_points(self, points):
+        self.points = list(set(self.points + points))
+        self.create_super_tri()
 
     def triangulate(self):
         for point in self.points:
@@ -63,6 +56,26 @@ class BowyerWatson:
                 #visualise super vertex?
                 if vertex in triangle.get_vertices():
                     self.remove_triangle(triangle)
+
+    def create_super_tri(self):
+        if not len(self.points) == 0:
+            self.super_verts = self.get_super_vertices()
+            super_edges = ( Edge(self.super_verts[0], self.super_verts[1]),
+                            Edge(self.super_verts[1], self.super_verts[2]),
+                            Edge(self.super_verts[0], self.super_verts[2])
+                        )
+            for edge in super_edges:
+                self.edges[edge.get_key()] = edge
+            self.add_triangle(*self.super_verts)
+
+    def get_super_vertices(self):
+        margin = config.super_tri_margin
+        xs, ys = zip(*self.points)
+        min_x, min_y, max_x, max_y = min(xs), min(ys), max(xs), max(ys)
+        vertex_a = Vertex(min_x - margin, min_y - margin)
+        vertex_b = Vertex(min_x - margin, max_y*2 + margin)
+        vertex_c = Vertex(max_x*2 + margin, min_y - margin)
+        return (vertex_a, vertex_b, vertex_c)
 
     def add_triangle(self, vertex_a, vertex_b, vertex_c):
         triangle = Triangle(vertex_a, vertex_b, vertex_c, self.edges)
