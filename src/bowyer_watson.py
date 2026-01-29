@@ -36,14 +36,14 @@ class BowyerWatson:
         new_vertex = Vertex(point[0],point[1])
         bad_triangles = set()
         #visualise new vertex
-        self.visualize_new(new_vertex)
+        self.visualize_new(new_vertex, active=True, reset_active=True)
         for triangle in self.triangles.values():
             if triangle.vertex_in_circumcircle(new_vertex):
                 bad_triangles.add(triangle)
                 for edge in triangle.get_edges():
                     if not edge.get_key() in self.edges:
                         self.edges[edge.get_key()] = edge
-                    self.visualize_new(edge)
+                    self.visualize_new(edge, active=True, reset_active=True)
                     pass #visualise bad triangle
         bad_tri_edgecount = {}
         for triangle in bad_triangles:
@@ -53,11 +53,11 @@ class BowyerWatson:
                     bad_tri_edgecount[key] = 0
                 bad_tri_edgecount[key] += 1
                 #visualise found edges
-                self.visualize_new(edge)
+                self.visualize_new(edge, active=True, reset_active=True)
         polygon = [self.edges[key] for key, count in bad_tri_edgecount.items() if count == 1]
         #visualise polygon
         for edge in polygon:
-            self.visualize_new(edge)
+            self.visualize_new(edge, active=True)
         for triangle in bad_triangles:
             self.remove_triangle(triangle)
         for edge in polygon:
@@ -147,14 +147,14 @@ class BowyerWatson:
             elif isinstance(object, Triangle):
                 self.visualizer_queue.put(methodcaller("remove_triangle", object))
 
-    def visualize_new(self, object):
+    def visualize_new(self, object, active=False, reset_active=False):
         if self.visualizer_queue: 
             if isinstance(object, Vertex):
-                self.visualizer_queue.put(methodcaller("new_vertex", object))
+                self.visualizer_queue.put(methodcaller("new_vertex", object, active, reset_active))
             elif isinstance(object, Edge):
-                self.visualizer_queue.put(methodcaller("new_edge", object))
+                self.visualizer_queue.put(methodcaller("new_edge", object, active, reset_active))
             elif isinstance(object, Triangle):
-                self.visualizer_queue.put(methodcaller("new_triangle", object))
+                self.visualizer_queue.put(methodcaller("new_triangle", object, active, reset_active))
 
 class Vertex:
     def __init__(self, x, y):
