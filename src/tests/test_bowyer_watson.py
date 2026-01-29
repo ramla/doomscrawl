@@ -104,8 +104,10 @@ class TestBowyerWatson(unittest.TestCase):
     def setUp(self):
         self.bw = BowyerWatson()
 
-        self.hard_points = [(0,0),(1,1),(10,10)]# (1,0), (2,0), (1,1), (2,2), (1,1e-12), (2,2e-12)]
-
+        self.hard_points = [(0,0),(1,1),(1,0), (2,0), (1,1), (2,2), (1,1e-12), (2,2e-12),(3,0)]
+        self.point_of_difficulty = [(0,0),(1,1),(1,0)] #super tri points are created so that a point such as this 
+                                        #will form a triangle with all points on a single line
+                                        #at least until I fix it
         min_coords = (0, 0)
         max_coords = (100, 100)
         n = 10**2
@@ -119,8 +121,14 @@ class TestBowyerWatson(unittest.TestCase):
     def test_hard_points(self):
         self.bw.add_points(self.hard_points)
         self.bw.triangulate()
-        print(self.bw.triangles)
+        print(self.bw.triangles.values())
 
     def test_random_points_float(self):
         self.random_points_float.triangulate()
-        print(self.bw.triangles)
+        print(self.bw.triangles.values())
+
+    def test_super_vert_generation_issue_or_circumcenter_logic(self):
+        self.bw.add_points(self.point_of_difficulty)
+        print(self.bw.triangles.values())
+        self.bw.triangulate()
+        print(self.bw.triangles.values())
