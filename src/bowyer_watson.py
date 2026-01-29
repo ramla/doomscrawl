@@ -28,6 +28,7 @@ class BowyerWatson:
             point = self.next_points.popleft()
             self.triangulate_point(point)
         except IndexError:
+            print("finishing triangulation")
             self.remove_super_tri()
             self.finished = True
 
@@ -63,7 +64,8 @@ class BowyerWatson:
         for edge in polygon:
             vertex_a, vertex_b = edge.get_vertices()
             print("handling polygon",polygon)
-            self.add_triangle(vertex_a, vertex_b, new_vertex)
+            if self.is_valid_triangle(vertex_a, vertex_b, new_vertex):
+                self.add_triangle(vertex_a, vertex_b, new_vertex)
 
     def triangulate_all(self):
         while self.next_points:
@@ -155,6 +157,9 @@ class BowyerWatson:
                 self.visualizer_queue.put(methodcaller("new_edge", object, active, reset_active))
             elif isinstance(object, Triangle):
                 self.visualizer_queue.put(methodcaller("new_triangle", object, active, reset_active))
+
+    def is_valid_triangle(self, vertex_a, vertex_b, vertex_c):
+        return vertex_a != vertex_b and vertex_b != vertex_c and vertex_a != vertex_c
 
 class Vertex:
     def __init__(self, x, y):
