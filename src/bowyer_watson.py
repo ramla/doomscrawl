@@ -1,59 +1,75 @@
 from math import sqrt
-import config
 from operator import methodcaller
+from collections import deque
+import config
 
 class BowyerWatson:
     def __init__(self, visualizer_queue=None, points=None):
         self.visualizer_queue = visualizer_queue
         self.points = []
+        self.next_points = deque()
         self.super_verts = []
         self.edges = {}
         self.triangles = {}
         self.triangles_with_edge = {}
+        self.finished = True
         self.add_points(points)
 
     def add_points(self, points):
         if points:
+            self.next_points.extend(list(set(points)))
             self.points = list(set(self.points + points))
             self.create_super_tri()
+            self.finished = False
+            print(self.points)
 
-    def triangulate(self):
-        for point in self.points:
-            new_vertex = Vertex(point[0],point[1])
-            bad_triangles = set()
-            #visualise new vertex
-            self.visualize_new(new_vertex)
-            for triangle in self.triangles.values():
-                if triangle.vertex_in_circumcircle(new_vertex):
-                    bad_triangles.add(triangle)
-                    for edge in triangle.get_edges():
-                        if not edge.get_key() in self.edges:
-                            self.edges[edge.get_key()] = edge
-                        self.visualize_new(edge)
-                        pass #visualise bad triangle
-            bad_tri_edgecount = {}
-            for triangle in bad_triangles:
+    def iterate_once(self):
+        try:
+            point = self.next_points.popleft()
+            self.triangulate_point(point)
+        except IndexError:
+            self.remove_super_tri()
+            self.finished = True
+
+    def triangulate_point(self, point):
+        print("triangulating point",point)
+        new_vertex = Vertex(point[0],point[1])
+        bad_triangles = set()
+        #visualise new vertex
+        self.visualize_new(new_vertex)
+        for triangle in self.triangles.values():
+            if triangle.vertex_in_circumcircle(new_vertex):
+                bad_triangles.add(triangle)
                 for edge in triangle.get_edges():
-                    key = edge.get_key() 
-                    if not key in bad_tri_edgecount:
-                        bad_tri_edgecount[key] = 0
-                    bad_tri_edgecount[key] += 1
-                    #visualise found edges
+                    if not edge.get_key() in self.edges:
+                        self.edges[edge.get_key()] = edge
                     self.visualize_new(edge)
-            polygon = [self.edges[key] for key, count in bad_tri_edgecount.items() if count == 1]
-            #visualise polygon
-            for edge in polygon:
+                    pass #visualise bad triangle
+        bad_tri_edgecount = {}
+        for triangle in bad_triangles:
+            for edge in triangle.get_edges():
+                key = edge.get_key() 
+                if not key in bad_tri_edgecount:
+                    bad_tri_edgecount[key] = 0
+                bad_tri_edgecount[key] += 1
+                #visualise found edges
                 self.visualize_new(edge)
-            for triangle in bad_triangles:
-                self.remove_triangle(triangle)
-            for edge in polygon:
-                vertex_a, vertex_b = edge.get_vertices()
-                self.add_triangle(vertex_a, vertex_b, new_vertex)
-        for triangle in list(self.triangles.values()):
-            for vertex in self.super_verts:
-                #visualise super vertex?
-                if vertex in triangle.get_vertices():
-                    self.remove_triangle(triangle)
+        polygon = [self.edges[key] for key, count in bad_tri_edgecount.items() if count == 1]
+        #visualise polygon
+        for edge in polygon:
+            self.visualize_new(edge)
+        for triangle in bad_triangles:
+            self.remove_triangle(triangle)
+        for edge in polygon:
+            vertex_a, vertex_b = edge.get_vertices()
+            print("handling polygon",polygon)
+            self.add_triangle(vertex_a, vertex_b, new_vertex)
+
+    def triangulate_all(self):
+        while self.next_points:
+            point = self.next_points.popleft()
+            self.triangulate_point(point)
+        self.remove_super_tri()
 
     def create_super_tri(self):
         if self.points:
@@ -78,8 +94,16 @@ class BowyerWatson:
         vertex_c = Vertex(max_x*2 + margin, min_y - margin)
         return (vertex_a, vertex_b, vertex_c)
 
+    def remove_super_tri(self):
+        for triangle in list(self.triangles.values()):
+            for vertex in self.super_verts:
+                #visualise super vertex?
+                if vertex in triangle.get_vertices():
+                    self.remove_triangle(triangle)
+
     def add_triangle(self, vertex_a, vertex_b, vertex_c):
         triangle = Triangle(vertex_a, vertex_b, vertex_c, self.edges)
+        print("added", triangle)
         self.triangles[triangle.get_key()] = triangle
         edges = (Edge(vertex_a, vertex_b),
                  Edge(vertex_a, vertex_c),

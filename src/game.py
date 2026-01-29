@@ -19,7 +19,7 @@ class Doomcrawl:
 
         self.dungeon = Dungeon((config.viewport_x, config.viewport_y))
         self.player = Player(self.dungeon.player_start_pos, (config.thickness, config.thickness))
-        self.bw = None
+        self.bw = BowyerWatson(visualizer_queue=self.visualizer.event_queue)
 
     def start(self):
         self.loop(config.target_fps)
@@ -42,6 +42,9 @@ class Doomcrawl:
                 room.anim_pop_tick(self.viewport, frame_time)
                 pygame.draw.rect(self.viewport, config.color["col1"], room)
 
+            if not self.bw.finished:
+                self.bw.iterate_once()
+
             self.visualizer.visualize(frame_time)
 
             pygame.draw.rect(self.viewport, config.color["hilite1"], self.player)
@@ -60,12 +63,7 @@ class Doomcrawl:
                 if event.key == pygame.K_r:
                     self.dungeon.add_room()
                 if event.key == pygame.K_t:
-                    if not self.bw:
-                        self.bw = BowyerWatson(visualizer_queue=self.visualizer.event_queue,
-                                                         points=self.dungeon.get_room_centers())
-                    else:
-                        self.bw.add_points(self.dungeon.get_room_centers())
-                        self.bw.triangulate()
+                    self.bw.add_points(self.dungeon.get_room_centers())
                 if event.key == pygame.K_f:
                     for list in self.visualizer.list_entities():
                         print(list)
