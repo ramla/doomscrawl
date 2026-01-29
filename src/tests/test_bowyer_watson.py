@@ -102,24 +102,25 @@ class TestTriangle(unittest.TestCase):
 
 class TestBowyerWatson(unittest.TestCase):
     def setUp(self):
-        self.empty_bw = BowyerWatson([], max_x=100, max_y=100)
+        self.bw = BowyerWatson()
 
-        hard_points = [(0,0), (1,0), (2,0), (1,1), (2,2), (1,1e-12), (2,2e-12)]
-        self.bw_hard_points = BowyerWatson(hard_points, max_x=100, max_y=100)
+        self.hard_points = [(0,0),(1,1),(10,10)]# (1,0), (2,0), (1,1), (2,2), (1,1e-12), (2,2e-12)]
 
         min_coords = (0, 0)
         max_coords = (100, 100)
         n = 10**2
-        self.bw_random_points_float = BowyerWatson(self.get_random_points_float(n, min_coords, 
-                                                                                   max_coords),
-                                                   max_x=max_coords[0], max_y=max_coords[1])
+        self.random_points_float = BowyerWatson(points=self.get_random_points_float(n, min_coords,
+                                                                                   max_coords))
 
     def get_random_points_float(self, n, min_coords, max_coords):
         return [(random.uniform(min_coords[0],max_coords[0]),
                  random.uniform(min_coords[1],max_coords[1])) for _ in range(n)]
 
-    def test_empty_bw(self):
-        self.assertEqual(len(self.empty_bw.points), 0)
-    
     def test_hard_points(self):
-        pass
+        self.bw.add_points(self.hard_points)
+        self.bw.triangulate()
+        print(self.bw.triangles)
+
+    def test_random_points_float(self):
+        self.random_points_float.triangulate()
+        print(self.bw.triangles)

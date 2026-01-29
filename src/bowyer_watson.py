@@ -3,7 +3,7 @@ import config
 from operator import methodcaller
 
 class BowyerWatson:
-    def __init__(self, points, visualizer_queue=None):
+    def __init__(self, visualizer_queue=None, points=None):
         self.visualizer_queue = visualizer_queue
         self.points = []
         self.super_verts = []
@@ -11,13 +11,11 @@ class BowyerWatson:
         self.triangles = {}
         self.triangles_with_edge = {}
         self.add_points(points)
-        if self.visualizer_queue:
-            for vertex in self.super_verts:
-                self.visualize_new(vertex)
 
     def add_points(self, points):
-        self.points = list(set(self.points + points))
-        self.create_super_tri()
+        if points:
+            self.points = list(set(self.points + points))
+            self.create_super_tri()
 
     def triangulate(self):
         for point in self.points:
@@ -58,7 +56,7 @@ class BowyerWatson:
                     self.remove_triangle(triangle)
 
     def create_super_tri(self):
-        if not len(self.points) == 0:
+        if self.points:
             self.super_verts = self.get_super_vertices()
             super_edges = ( Edge(self.super_verts[0], self.super_verts[1]),
                             Edge(self.super_verts[1], self.super_verts[2]),
@@ -67,6 +65,9 @@ class BowyerWatson:
             for edge in super_edges:
                 self.edges[edge.get_key()] = edge
             self.add_triangle(*self.super_verts)
+        if self.visualizer_queue:
+            for vertex in self.super_verts:
+                self.visualize_new(vertex)
 
     def get_super_vertices(self):
         margin = config.super_tri_margin
@@ -114,20 +115,22 @@ class BowyerWatson:
         #visualise (bad, parameter?) triangle removal
 
     def visualize_remove(self, object):
-        if isinstance(object, Vertex):
-            self.visualizer_queue.put(methodcaller("remove_vertex", object))
-        elif isinstance(object, Edge):
-            self.visualizer_queue.put(methodcaller("remove_edge", object))
-        elif isinstance(object, Triangle):
-            self.visualizer_queue.put(methodcaller("remove_triangle", object))
+        if self.visualizer_queue:
+            if isinstance(object, Vertex):
+                self.visualizer_queue.put(methodcaller("remove_vertex", object))
+            elif isinstance(object, Edge):
+                self.visualizer_queue.put(methodcaller("remove_edge", object))
+            elif isinstance(object, Triangle):
+                self.visualizer_queue.put(methodcaller("remove_triangle", object))
 
     def visualize_new(self, object):
-        if isinstance(object, Vertex):
-            self.visualizer_queue.put(methodcaller("new_vertex", object))
-        elif isinstance(object, Edge):
-            self.visualizer_queue.put(methodcaller("new_edge", object))
-        elif isinstance(object, Triangle):
-            self.visualizer_queue.put(methodcaller("new_triangle", object))
+        if self.visualizer_queue: 
+            if isinstance(object, Vertex):
+                self.visualizer_queue.put(methodcaller("new_vertex", object))
+            elif isinstance(object, Edge):
+                self.visualizer_queue.put(methodcaller("new_edge", object))
+            elif isinstance(object, Triangle):
+                self.visualizer_queue.put(methodcaller("new_triangle", object))
 
 class Vertex:
     def __init__(self, x, y):
@@ -285,6 +288,10 @@ class Triangle:
             det = a_1 - a_2
             if det == 0:
                 print("HELP!!!!!!!!!!!!")
+                print("verts",{self.get_vertices()})
+                #fails when points are in a straight line
+                #need to adjust super verts if this happens?
+                #(verts {(Vertex(-50, 70), Vertex(70, -50), Vertex(10, 10))})
             x = (c_2 - c_1) / det
             y = ((a_1 * c_2) - (a_2 * c_1)) / det
             self.circumcenter = Vertex(x,y)

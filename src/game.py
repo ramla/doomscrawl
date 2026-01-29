@@ -61,9 +61,10 @@ class Doomcrawl:
                     self.dungeon.add_room()
                 if event.key == pygame.K_t:
                     if not self.bw:
-                        self.bw = BowyerWatson(self.dungeon.get_room_centers(),
-                                               self.visualizer.event_queue)
+                        self.bw = BowyerWatson(visualizer_queue=self.visualizer.event_queue,
+                                                         points=self.dungeon.get_room_centers())
                     else:
+                        self.bw.add_points(self.dungeon.get_room_centers())
                         self.bw.triangulate()
                 if event.key == pygame.K_f:
                     for list in self.visualizer.list_entities():
