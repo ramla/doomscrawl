@@ -23,6 +23,7 @@ class Doomcrawl:
         self.player = Player(self.dungeon.player_start_pos, (config.thickness, config.thickness))
         self.bw = BowyerWatson(visualizer_queue=self.visualizer.event_queue)
         self.step_triangulation = False
+        self.keep_triangulating = False
 
     def start(self):
         self.loop(config.target_fps)
@@ -45,9 +46,14 @@ class Doomcrawl:
                 room.anim_pop_tick(self.viewport, frame_time)
                 pygame.draw.rect(self.viewport, config.color["col1"], room)
 
-            if not self.bw.finished and self.step_triangulation:
-                self.bw.iterate_once()
-                self.step_triangulation = False
+            if not self.bw.finished:
+                if self.keep_triangulating:
+                    self.bw.iterate_once()
+                    if self.step_triangulation:
+                        self.step_triangulation = False
+                        self.keep_triangulating = False
+                elif self.step_triangulation:
+                    self.bw.iterate_once()
 
             self.visualizer.visualize(frame_time)
 
@@ -64,12 +70,15 @@ class Doomcrawl:
             if event.type == QUIT:
                 self.running = False
             if event.type == KEYDOWN:
-                if event.key == pygame.K_r and config.random_rooms:
+                if event.key == pygame.K_r:# and config.random_rooms:
                     self.dungeon.add_room()
                 if event.key == pygame.K_t:
                     self.bw.add_points(self.dungeon.get_room_centers())
                 if event.key == pygame.K_e:
                     self.step_triangulation = True
+                if event.key == pygame.K_f:
+                    self.keep_triangulating = True
+
 
 
     def process_key_input(self):
@@ -102,9 +111,6 @@ class Doomcrawl:
                 self.player.move_ip(0, self.player.speed)
             elif config.collision_debug:
                 print("colliding down")
-
-        if keys[pygame.K_f]:
-            self.step_triangulation = True
 
         if keys[pygame.K_q]:
             self.running = False

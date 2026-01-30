@@ -64,11 +64,11 @@ class BowyerWatson:
             if self.is_valid_triangle(vertex_a, vertex_b, new_vertex):
                 self.add_triangle(vertex_a, vertex_b, new_vertex)
 
-    def triangulate_all(self):
-        while self.next_points:
-            point = self.next_points.popleft()
-            self.triangulate_point(point)
-        self.remove_super_tri()
+    # def triangulate_all(self):
+    #     while self.next_points:
+    #         point = self.next_points.popleft()
+    #         self.triangulate_point(point)
+    #     self.remove_super_tri()
 
     def create_super_tri(self):
         if self.points:
