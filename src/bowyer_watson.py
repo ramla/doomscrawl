@@ -21,7 +21,6 @@ class BowyerWatson:
             self.points = list(set(self.points + points))
             self.create_super_tri()
             self.finished = False
-            print(self.points)
 
     def iterate_once(self):
         try:
@@ -33,7 +32,6 @@ class BowyerWatson:
             self.finished = True
 
     def triangulate_point(self, point):
-        print("triangulating point",point)
         new_vertex = Vertex(point[0],point[1])
         bad_triangles = set()
         #visualise new vertex
@@ -63,7 +61,6 @@ class BowyerWatson:
             self.remove_triangle(triangle)
         for edge in polygon:
             vertex_a, vertex_b = edge.get_vertices()
-            print("handling polygon",polygon)
             if self.is_valid_triangle(vertex_a, vertex_b, new_vertex):
                 self.add_triangle(vertex_a, vertex_b, new_vertex)
 
@@ -105,7 +102,6 @@ class BowyerWatson:
 
     def add_triangle(self, vertex_a, vertex_b, vertex_c):
         triangle = Triangle(vertex_a, vertex_b, vertex_c, self.edges)
-        print("added", triangle)
         self.triangles[triangle.get_key()] = triangle
         edges = (Edge(vertex_a, vertex_b),
                  Edge(vertex_a, vertex_c),
