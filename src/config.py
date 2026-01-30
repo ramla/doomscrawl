@@ -1,7 +1,8 @@
 import pygame
 
 collision_debug = False
-room_debug = False
+room_debug = False  #print room list to terminal when passing room centers to 
+                    #triangulation, among other things
 visualizer_debug = False
 delay_visualisation = True
 random_rooms = True
