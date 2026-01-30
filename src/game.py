@@ -66,9 +66,6 @@ class Doomcrawl:
                     self.dungeon.add_room()
                 if event.key == pygame.K_t:
                     self.bw.add_points(self.dungeon.get_room_centers())
-                if event.key == pygame.K_f:
-                    for list in self.visualizer.list_entities():
-                        print(list)
                 if event.key == pygame.K_e:
                     self.step_triangulation = True
 
