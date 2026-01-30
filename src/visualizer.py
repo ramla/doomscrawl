@@ -75,15 +75,23 @@ class Visualizer:
         if active:
             self.active_triangles.append(self.entities[triangle])
 
+    def remove_vertex(self, vertex):
+        if config.visualizer_debug:
+            print("removing vertex", vertex)
+        try:
+            self.entities.pop(vertex)
+        except KeyError:
+            if config.visualizer_debug:
+                print("visualizer.remove_vertex() KeyError:", vertex)
         
     def remove_edge(self, edge):
         if config.visualizer_debug:
-            print("removing edge",edge.get_key())
+            print("removing edge", edge.get_key())
         try:
             self.entities.pop(edge.get_key())
         except KeyError:
             if config.visualizer_debug:
-                print("visualizer.remove_triangle() KeyError:",edge)
+                print("visualizer.remove_triangle() KeyError:", edge)
 
     def remove_triangle(self, triangle):
         if config.visualizer_debug:
@@ -92,7 +100,7 @@ class Visualizer:
             self.entities.pop(triangle)
         except KeyError:
             if config.visualizer_debug:
-                print("visualizer.remove_triangle() KeyError:",triangle)
+                print("visualizer.remove_triangle() KeyError:", triangle)
 
     def animate_entity(self, key, anim_func, next_event_delay=None):
         if next_event_delay == None or not config.delay_visualisation:
