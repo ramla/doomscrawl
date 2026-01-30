@@ -10,14 +10,16 @@ from visualizer import Visualizer
 
 
 class Doomcrawl:
-    def __init__(self):
+    def __init__(self, rooms=None):
         pygame.init()
         self.viewport = pygame.display.set_mode((config.viewport_x,config.viewport_y),
                                                 pygame.RESIZABLE)
         pygame.display.set_caption('Doomscrawl')
         self.visualizer = Visualizer(self.viewport)
 
-        self.dungeon = Dungeon((config.viewport_x, config.viewport_y))
+        if rooms:
+            config.random_rooms = False
+        self.dungeon = Dungeon((config.viewport_x, config.viewport_y), rooms)
         self.player = Player(self.dungeon.player_start_pos, (config.thickness, config.thickness))
         self.bw = BowyerWatson(visualizer_queue=self.visualizer.event_queue)
         self.step_triangulation = False
@@ -62,7 +64,7 @@ class Doomcrawl:
             if event.type == QUIT:
                 self.running = False
             if event.type == KEYDOWN:
-                if event.key == pygame.K_r:
+                if event.key == pygame.K_r and config.random_rooms:
                     self.dungeon.add_room()
                 if event.key == pygame.K_t:
                     self.bw.add_points(self.dungeon.get_room_centers())

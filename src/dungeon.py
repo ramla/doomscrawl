@@ -3,13 +3,17 @@ from random import randint
 import config
 
 class Dungeon:
-    def __init__(self, screen_size):
-        self.rooms = []
+    def __init__(self, screen_size, rooms):
         self.screen_size = screen_size
         self.init_collision_surface()
         self.render_collision_mask()
         self.init_texture()
-        self.add_room(fail_allowed=False)
+        self.rooms = []
+        if rooms == None:
+            self.add_room(fail_allowed=False)
+        else:
+            for room in rooms:
+                self.add_room(center=room[0], size=room[1])
         self.player_start_pos = self.rooms[0].center
 
     def init_collision_surface(self):
@@ -42,7 +46,7 @@ class Dungeon:
             room = Room(size=size, pos=pos, center=center)
             if config.room_debug:
                 print(f"center {center}, size {room.size}, offset {room.offset}")
-            if not self.collision_mask.overlap(room.mask, room.get_mask_offset()):
+            if not self.overlapping_existing(room.mask, room.get_mask_offset()):
                 self.collision_surface.blit(room.surface, room.offset)
                 self.render_collision_mask()
                 room.anim_pop_init()
@@ -53,14 +57,20 @@ class Dungeon:
             print(f"room creation failed, tries = {tries}")
 
     def overlapping_existing(self, mask, offset):
-        if self.collision_mask.overlap(mask, offset):
+        """Check if [new room's] mask overlaps existing ones, but only if randomising rooms"""
+        if config.random_rooms and self.collision_mask.overlap(mask, offset):
             return True
         return False
 
     def get_room_centers(self):
         centers = []
+        sizes = []
         for room in self.rooms:
             centers.append(room.center)
+        if config.room_debug:
+            for room in self.rooms:
+                sizes.append(room.size)
+            print("room list:",list(zip(centers, sizes)))
         return centers
 
 

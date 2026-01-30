@@ -4,6 +4,7 @@ collision_debug = False
 room_debug = False
 visualizer_debug = False
 delay_visualisation = True
+random_rooms = True
 
 viewport_x = 1800
 viewport_y = 1000
