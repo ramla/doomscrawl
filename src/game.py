@@ -1,5 +1,6 @@
 import sys
 import pygame
+import pygame.freetype
 
 from dungeon import Dungeon
 from player import Player
@@ -14,8 +15,8 @@ class Doomcrawl:
         self.viewport = pygame.display.set_mode((config.viewport_x,config.viewport_y),
                                                 pygame.RESIZABLE)
         pygame.display.set_caption('Doomscrawl')
-        pygame.font.init()
-        self.font = pygame.font.Font(config.FONTFILE, config.thickness)
+        pygame.freetype.init()
+        self.font = pygame.freetype.Font(config.FONTFILE, config.thickness * 3)
         self.help_surface = self.create_help_surface()
 
         if rooms:
@@ -77,7 +78,7 @@ class Doomcrawl:
             if event.type == pygame.QUIT:
                 self.running = False
             if event.type == pygame.KEYDOWN:
-                # self.helping = False
+                self.helping = False
                 if event.key == pygame.K_r:# and config.random_rooms:
                     self.dungeon.add_room()
                 if event.key == pygame.K_t:
@@ -125,16 +126,22 @@ class Doomcrawl:
             self.running = False
 
     def create_help_surface(self):
-        # help_surface = pygame.Surface((config.viewport_x, config.viewport_y), pygame.SRCALPHA)
-        help_surface = self.font.render(\
-            "Q      Quit\n" \
-            "WASD   Move\n" \
-            "T      Initialise triangulation\n" \
-            "F      Triangulate all\n" \
-            "E      Triangulate one point\n" \
-            "F1 or H to display this again\n" \
-            "   any key to continue",
-            True, config.color["light1"], None)
+        help_surface = pygame.Surface((config.viewport_x, config.viewport_y), pygame.SRCALPHA)
+        text =  "      Q      Quit\n" \
+                "WASD    Move\n" \
+                "      T      Initialise triangulation\n" \
+                "      F      Triangulate all\n" \
+                "      E      Triangulate one point\n" \
+                "    F1 or H to display this again\n" \
+                "        any key to continue"
+
+        line_height = self.font.get_sized_height()
+        x, y = config.thickness * 4, config.thickness * 4
+        for line in text.splitlines():
+            self.font.render_to(help_surface, (x, y),
+                                line, config.color["light1"])
+            y += line_height + config.thickness
+
         return help_surface
 
     def show_help(self):
