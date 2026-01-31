@@ -28,7 +28,7 @@ class BowyerWatson:
             point = self.next_points.popleft()
             self.triangulate_point(point)
         except IndexError:
-            print("finishing triangulation")
+            # print("finishing triangulation")
             self.remove_super_tri()
             self.finished = True
 
@@ -312,7 +312,7 @@ class Triangle:
 
     def get_circumcircle_radius(self):
         if not self.circumcircle_radius:
-            a, b, c = [edge.get_length() for edge in self.edges()]
+            a, b, c = [edge.get_length() for edge in self.get_edges()]
             self.circumcircle_radius = a*b*c / sqrt((a+b+c)*(b+c-a)*(c+a-b)*(a+b-c))
         return self.circumcircle_radius
 

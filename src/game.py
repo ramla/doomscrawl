@@ -67,9 +67,9 @@ class Doomcrawl:
 
     def process_events(self):
         for event in pygame.event.get():
-            if event.type == pygame.event.QUIT:
+            if event.type == pygame.QUIT:
                 self.running = False
-            if event.type == pygame.event.KEYDOWN:
+            if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:# and config.random_rooms:
                     self.dungeon.add_room()
                 if event.key == pygame.K_t:

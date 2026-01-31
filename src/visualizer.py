@@ -113,7 +113,8 @@ class Visualizer:
             print("entities:",self.entities)
         try:
             self.entities.pop(triangle.get_circumcircle_key())
-            print("succesfully popped")
+            if config.visualizer_debug:
+                print("succesfully popped")
         except KeyError:
             if config.visualizer_debug:
                 print("visualizer.remove_circle() KeyError:", triangle.circumcircle_key,
