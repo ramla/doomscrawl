@@ -40,7 +40,8 @@ class BowyerWatson:
         for triangle in self.triangles.values():
             if triangle.vertex_in_circumcircle(new_vertex):
                 #visualise circle
-                triangle.visualize_circle(self.visualizer_queue)
+                if self.visualizer_queue:
+                    triangle.visualize_circle(self.visualizer_queue)
                 bad_triangles.add(triangle)
                 for edge in triangle.get_edges():
                     if not edge.get_key() in self.edges:
@@ -48,7 +49,8 @@ class BowyerWatson:
                     self.visualize_new(edge, active=True, reset_active=True)
                     #visualise bad triangle
                     self.visualize_activate(triangle)
-                triangle.visualize_remove_circle(self.visualizer_queue)
+                if self.visualizer_queue:
+                    triangle.visualize_remove_circle(self.visualizer_queue)
         bad_tri_edgecount = {}
         for triangle in bad_triangles:
             for edge in triangle.get_edges():
@@ -69,11 +71,11 @@ class BowyerWatson:
             if self.is_valid_triangle(vertex_a, vertex_b, new_vertex):
                 self.add_triangle(vertex_a, vertex_b, new_vertex)
 
-    # def triangulate_all(self):
-    #     while self.next_points:
-    #         point = self.next_points.popleft()
-    #         self.triangulate_point(point)
-    #     self.remove_super_tri()
+    def triangulate_all(self):
+        while self.next_points:
+            point = self.next_points.popleft()
+            self.triangulate_point(point)
+        self.remove_super_tri()
 
     def create_super_tri(self):
         if self.points:

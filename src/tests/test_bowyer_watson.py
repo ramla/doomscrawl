@@ -120,15 +120,15 @@ class TestBowyerWatson(unittest.TestCase):
 
     def test_hard_points(self):
         self.bw.add_points(self.hard_points)
-        self.bw.triangulate()
+        self.bw.triangulate_all()
         print(self.bw.triangles.values())
 
     def test_random_points_float(self):
-        self.random_points_float.triangulate()
+        self.random_points_float.triangulate_all()
         print(self.bw.triangles.values())
 
     def test_super_vert_generation_issue_or_circumcenter_logic(self):
         self.bw.add_points(self.point_of_difficulty)
         print(self.bw.triangles.values())
-        self.bw.triangulate()
+        self.bw.triangulate_all()
         print(self.bw.triangles.values())
