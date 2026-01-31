@@ -50,7 +50,7 @@ class Doomcrawl:
                 room.anim_pop_tick(self.viewport, frame_time)
                 pygame.draw.rect(self.viewport, config.color["col1"], room)
 
-            if not self.bw.finished:
+            if not self.bw.ready:
                 if self.keep_triangulating:
                     self.bw.iterate_once()
                     if self.step_triangulation:
