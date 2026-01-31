@@ -60,34 +60,27 @@ class BowyerWatson:
             self.create_super_tri()
             self.ready = False
 
-    def iterate_once(self):
-        try:
-            point = self.next_points.popleft()
-            self.triangulate_point(point)
-        except IndexError:
-            # print("finishing triangulation")
-            self.remove_super_tri()
-            self.ready = True
-
     def triangulate_point(self, point):
+        """Single point triangulation. Simply iterates through existing triangles to find if their
+        circumcircle encompasses the given point. Bad triangles are removed and the edges around
+        their connected area are used to form new triangles with the new point.
+        
+        Parameters:
+            point: tuple of x,y coordinates expected to lie within the boudaries
+        """
         new_vertex = Vertex(point[0],point[1])
         bad_triangles = set()
-        #visualise new vertex
         self.visualize_new(new_vertex, active=True, reset_active=True)
         for triangle in self.triangles.values():
             if triangle.vertex_in_circumcircle(new_vertex):
-                #visualise circle
-                if self.visualizer_queue:
-                    triangle.visualize_circle(self.visualizer_queue)
+                triangle.visualize_circle(self.visualizer_queue)
                 bad_triangles.add(triangle)
                 for edge in triangle.get_edges():
                     if not edge.get_key() in self.edges:
                         self.edges[edge.get_key()] = edge
                     self.visualize_new(edge, active=True, reset_active=True)
-                    #visualise bad triangle
                     self.visualize_activate(triangle)
-                if self.visualizer_queue:
-                    triangle.visualize_remove_circle(self.visualizer_queue)
+                triangle.visualize_remove_circle(self.visualizer_queue)
         bad_tri_edgecount = {}
         for triangle in bad_triangles:
             for edge in triangle.get_edges():
@@ -95,10 +88,8 @@ class BowyerWatson:
                 if not key in bad_tri_edgecount:
                     bad_tri_edgecount[key] = 0
                 bad_tri_edgecount[key] += 1
-                #visualise found edges
                 self.visualize_new(edge, active=True, reset_active=True)
         polygon = [self.edges[key] for key, count in bad_tri_edgecount.items() if count == 1]
-        #visualise polygon
         for edge in polygon:
             self.visualize_new(edge, active=True)
         for triangle in bad_triangles:
@@ -107,6 +98,15 @@ class BowyerWatson:
             vertex_a, vertex_b = edge.get_vertices()
             if self.is_valid_triangle(vertex_a, vertex_b, new_vertex):
                 self.add_triangle(vertex_a, vertex_b, new_vertex)
+
+    def iterate_once(self):
+        try:
+            point = self.next_points.popleft()
+            self.triangulate_point(point)
+        except IndexError:
+            # print("finishing triangulation")
+            self.remove_super_tri()
+            self.ready = True
 
     def triangulate_all(self):
         while self.next_points:
@@ -165,7 +165,6 @@ class BowyerWatson:
             if key not in self.triangles_with_edge:
                 self.triangles_with_edge[key] = 0
             self.triangles_with_edge[key] += 1
-        #visualise new triangle
         self.visualize_new(triangle)
         return triangle.get_key()
 
@@ -184,7 +183,6 @@ class BowyerWatson:
                 except KeyError:
                     if config.visualizer_debug:
                         print("bw.KeyError:",edge)
-        #visualise triangle removal
         self.visualize_remove(triangle)
 
         #visualise (bad, parameter?) triangle removal
@@ -403,10 +401,12 @@ class Triangle:
         return valid_edges
 
     def visualize_circle(self, visualizer_queue):
-        visualizer_queue.put(methodcaller("new_circle", self))
+        if visualizer_queue is not None:
+            visualizer_queue.put(methodcaller("new_circle", self))
 
     def visualize_remove_circle(self, visualizer_queue):
-        visualizer_queue.put(methodcaller("remove_circle", self))
+        if visualizer_queue is not None:
+            visualizer_queue.put(methodcaller("remove_circle", self))
 
     def get_circumcircle_key(self):
         return "VCCir" + str(self)
