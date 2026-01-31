@@ -4,7 +4,38 @@ from collections import deque
 import config
 
 class BowyerWatson:
+    """Class implements Delaunay triangulation with Bowyer-Watson algorithm. It can be run one
+    point at a time to run visualisation in between to see the algorithm at work.
+
+    Attributes:
+        points: All points passed to the triangulation class
+
+        next_points: A deque of new tuples of x,y coordinates to triangulate
+
+        super_verts: Tuple containing boundary vertices
+
+        super_tri_key:
+
+        edges: Dictionray containing Edge objects relevant to triangulation
+
+        triangles: Dictionary containing Triangle objects relevant to triangulation
+
+        triangles_with_edge: Dictionary containing count of Triangles in self.triangles that share
+            the Edge in key
+
+        intialised: Bool for whether the boundary has been set and points added to next_points
+
+        ready: Bool for readiness to receive next set of points
+    """
+
     def __init__(self, visualizer_queue=None, points=None):
+        """
+        Parameters:
+            visualizer_queue: An optional queue.Queue to put methodcaller objects in with a Vertex,
+            Edge or Triangle object and possibly additional parameters. See also visualizer.py
+
+            points: a list of tuples of x,y coordinates
+        """
         self.visualizer_queue = visualizer_queue
         self.points = []
         self.next_points = deque()
@@ -17,6 +48,12 @@ class BowyerWatson:
         self.add_points(points)
 
     def add_points(self, points):
+        """Initialises the triangulation by creating the boundary around the points and preventing
+        further point additions before these have been triangulated
+
+        Parameters:
+            points: a list of tuples of x and y coordinates
+        """
         if points and self.ready:
             self.next_points.extend(list(set(points)))
             self.points = list(set(self.points + points))
