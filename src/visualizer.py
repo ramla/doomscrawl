@@ -1,6 +1,6 @@
-import pygame
 import queue
 from operator import methodcaller
+import pygame
 import config
 
 
@@ -89,7 +89,7 @@ class Visualizer:
         except KeyError:
             if config.visualizer_debug:
                 print("visualizer.remove_vertex() KeyError:", vertex)
-        
+
     def remove_edge(self, edge):
         if config.visualizer_debug:
             print("removing edge", edge.get_key())
@@ -116,7 +116,8 @@ class Visualizer:
             print("succesfully popped")
         except KeyError:
             if config.visualizer_debug:
-                print("visualizer.remove_circle() KeyError:", triangle.circumcircle_key, "for", triangle)
+                print("visualizer.remove_circle() KeyError:", triangle.circumcircle_key,
+                      "for", triangle)
 
     def activate_triangle(self, triangle, reset_active):
         if reset_active:
@@ -132,7 +133,7 @@ class Visualizer:
                 print("visualizer.activate_triangle() KeyError:", triangle)
 
     def animate_entity(self, key, anim_func, next_event_delay=None):
-        if next_event_delay == None or not config.delay_visualisation:
+        if next_event_delay is None or not config.delay_visualisation:
             next_event_delay = self.delay_min
         self.accumulator = next_event_delay
         anim_func(self.entities[key])
@@ -188,8 +189,7 @@ class VisualEdge:
         if active:
             self.activate()
         else:
-            self.deactivate()
-        
+            self.deactivate()    
 
     def draw(self, viewport, frame_time):
         pygame.draw.line(viewport, self.color, self.a, self.b, int(self.width))
@@ -217,14 +217,13 @@ class VisualTriangle:
             self.activate()
         else:
             self.deactivate()
-        
 
     def draw(self, viewport, frame_time):
         pygame.draw.polygon(viewport, self.color, self.points, int(self.width))
 
     def __repr__(self):
         return f"VTri{self.triangle.get_key()}"
-    
+
     def activate(self):
         self.active = True
         self.color = self.color_active
@@ -245,8 +244,10 @@ class VisualCircumcircle:
         self.center = triangle.circumcenter.get_coord()
         self.blit_dest = (self.center[0] - self.radius, self.center[1] - self.radius)
         self.alpha_surface = pygame.Surface((self.radius*2, self.radius*2), pygame.SRCALPHA)
-        pygame.draw.circle(self.alpha_surface, self.color_fill, (self.radius, self.radius), self.radius, 0)
-        pygame.draw.circle(self.alpha_surface, self.color, (self.radius, self.radius), self.radius, int(self.width))
+        pygame.draw.circle(self.alpha_surface, self.color_fill, 
+                           (self.radius, self.radius), self.radius, 0)
+        pygame.draw.circle(self.alpha_surface, self.color, 
+                           (self.radius, self.radius), self.radius, int(self.width))
 
     def draw(self, viewport, frame_time):
         viewport.blit(self.alpha_surface, self.blit_dest)

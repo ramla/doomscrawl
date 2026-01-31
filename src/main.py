@@ -1,4 +1,5 @@
 from game import Doomcrawl
+
 default_size = (100,100)
 rooms = None
 # rooms = [((200,200), default_size),

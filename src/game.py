@@ -1,6 +1,5 @@
-import pygame
-from pygame.locals import *
 import sys
+import pygame
 
 from dungeon import Dungeon
 from player import Player
@@ -24,16 +23,16 @@ class Doomcrawl:
         self.bw = BowyerWatson(visualizer_queue=self.visualizer.event_queue)
         self.step_triangulation = False
         self.keep_triangulating = False
+        self.running = True
 
     def start(self):
         self.loop(config.target_fps)
         sys.exit()
 
     def loop(self, target_fps):
-        FPS = pygame.time.Clock()
-        self.running = True
+        clock = pygame.time.Clock()
         while self.running:
-            frame_time = FPS.tick(target_fps) / 1000
+            frame_time = clock.tick(target_fps) / 1000
 
             self.process_events()
             self.process_key_input()
@@ -68,9 +67,9 @@ class Doomcrawl:
 
     def process_events(self):
         for event in pygame.event.get():
-            if event.type == QUIT:
+            if event.type == pygame.event.QUIT:
                 self.running = False
-            if event.type == KEYDOWN:
+            if event.type == pygame.event.KEYDOWN:
                 if event.key == pygame.K_r:# and config.random_rooms:
                     self.dungeon.add_room()
                 if event.key == pygame.K_t:
@@ -115,4 +114,3 @@ class Doomcrawl:
 
         if keys[pygame.K_q]:
             self.running = False
-

@@ -1,5 +1,5 @@
-import pygame
 from random import randint
+import pygame
 import config
 
 class Dungeon:
@@ -9,7 +9,7 @@ class Dungeon:
         self.render_collision_mask()
         self.init_texture()
         self.rooms = []
-        if rooms == None:
+        if rooms is None:
             self.add_room(fail_allowed=False)
         else:
             for room in rooms:
@@ -76,7 +76,7 @@ class Dungeon:
 
 class Room(pygame.Rect):
     def __init__(self, size=None, pos=None, center=None):
-        if size == None:
+        if size is None:
             self.size = self.get_random_size()
         else:
             self.size = size
@@ -119,11 +119,11 @@ class Room(pygame.Rect):
         x = self.offset[0] - config.thickness
         y = self.offset[1] - config.thickness
         return (x,y)
-    
+
     def anim_pop_init(self):
         self.pop_timer = 2
         self.animation_copy = self.inflate(2* config.thickness, 2* config.thickness)
-    
+
     def anim_pop_tick(self, viewport, frame_time):
         if self.pop_timer > 0:
             self.pop_timer -= frame_time
@@ -133,4 +133,3 @@ class Room(pygame.Rect):
             pygame.draw.rect(viewport, config.color["col1"], self.animation_copy)
         else:
             pass
-

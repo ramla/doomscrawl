@@ -79,7 +79,7 @@ class BowyerWatson:
 
     def create_super_tri(self):
         if self.points:
-            if self.super_verts == None:
+            if self.super_verts is None:
                 self.super_verts = self.get_super_vertices()
                 super_edges = ( Edge(self.super_verts[0], self.super_verts[1]),
                                 Edge(self.super_verts[1], self.super_verts[2]),
@@ -125,7 +125,7 @@ class BowyerWatson:
         for edge in edges:
             key = edge.get_key()
             self.edges[key] = edge
-            if not key in self.triangles_with_edge:
+            if key not in self.triangles_with_edge:
                 self.triangles_with_edge[key] = 0
             self.triangles_with_edge[key] += 1
         #visualise new triangle
@@ -152,32 +152,32 @@ class BowyerWatson:
 
         #visualise (bad, parameter?) triangle removal
 
-    def visualize_remove(self, object):
+    def visualize_remove(self, bw_object):
         if self.visualizer_queue:
-            if isinstance(object, Vertex):
-                self.visualizer_queue.put(methodcaller("remove_vertex", object))
-            elif isinstance(object, Edge):
-                self.visualizer_queue.put(methodcaller("remove_edge", object))
-            elif isinstance(object, Triangle):
-                self.visualizer_queue.put(methodcaller("remove_triangle", object))
+            if isinstance(bw_object, Vertex):
+                self.visualizer_queue.put(methodcaller("remove_vertex", bw_object))
+            elif isinstance(bw_object, Edge):
+                self.visualizer_queue.put(methodcaller("remove_edge", bw_object))
+            elif isinstance(bw_object, Triangle):
+                self.visualizer_queue.put(methodcaller("remove_triangle", bw_object))
 
-    def visualize_new(self, object, active=False, reset_active=False):
+    def visualize_new(self, bw_object, active=False, reset_active=False):
         if self.visualizer_queue: 
-            if isinstance(object, Vertex):
-                self.visualizer_queue.put(methodcaller("new_vertex", object, active, reset_active))
-            elif isinstance(object, Edge):
-                self.visualizer_queue.put(methodcaller("new_edge", object, active, reset_active))
-            elif isinstance(object, Triangle):
-                self.visualizer_queue.put(methodcaller("new_triangle", object, active, reset_active))
+            if isinstance(bw_object, Vertex):
+                self.visualizer_queue.put(methodcaller("new_vertex", bw_object, active, reset_active))
+            elif isinstance(bw_object, Edge):
+                self.visualizer_queue.put(methodcaller("new_edge", bw_object, active, reset_active))
+            elif isinstance(bw_object, Triangle):
+                self.visualizer_queue.put(methodcaller("new_triangle", bw_object, active, reset_active))
 
-    def visualize_activate(self, object, reset_active=False):
+    def visualize_activate(self, bw_object, reset_active=False):
         if self.visualizer_queue:
-            if isinstance(object, Vertex):
-                self.visualizer_queue.put(methodcaller("activate_vertex", object, reset_active))
-            elif isinstance(object, Edge):
-                self.visualizer_queue.put(methodcaller("activate_edge", object, reset_active))
-            elif isinstance(object, Triangle):
-                self.visualizer_queue.put(methodcaller("activate_triangle", object, reset_active))
+            if isinstance(bw_object, Vertex):
+                self.visualizer_queue.put(methodcaller("activate_vertex", bw_object, reset_active))
+            elif isinstance(bw_object, Edge):
+                self.visualizer_queue.put(methodcaller("activate_edge", bw_object, reset_active))
+            elif isinstance(bw_object, Triangle):
+                self.visualizer_queue.put(methodcaller("activate_triangle", bw_object, reset_active))
 
     def is_valid_triangle(self, vertex_a, vertex_b, vertex_c):
         return vertex_a != vertex_b and vertex_b != vertex_c and vertex_a != vertex_c
@@ -202,7 +202,7 @@ class Vertex:
             return False
         else:
             return self.y < vertex.y
-    
+
     def __hash__(self):
         return hash((self.x, self.y))
 
@@ -247,11 +247,11 @@ class Edge:
 
     def get_slope(self):
         if not self.slope:
-            nominator = (self.vertex_a.y - self.vertex_b.y)
-            denominator = (self.vertex_a.x - self.vertex_b.x)
+            nominator = self.vertex_a.y - self.vertex_b.y
+            denominator = self.vertex_a.x - self.vertex_b.x
             if denominator == 0:
-                nominator = (self.vertex_b.y - self.vertex_a.y)
-                denominator = (self.vertex_b.x - self.vertex_a.x)
+                nominator = self.vertex_b.y - self.vertex_a.y
+                denominator = self.vertex_b.x - self.vertex_a.x
                 if denominator == 0:
                     self.slope = float("inf")
                     return self.slope
@@ -312,10 +312,7 @@ class Triangle:
 
     def get_circumcircle_radius(self):
         if not self.circumcircle_radius:
-            sides = []
-            for edge in self.get_edges():
-                sides.append(edge.get_length())
-            a, b, c = sides
+            a, b, c = [edge.get_length() for edge in self.edges()]
             self.circumcircle_radius = a*b*c / sqrt((a+b+c)*(b+c-a)*(c+a-b)*(a+b-c))
         return self.circumcircle_radius
 
