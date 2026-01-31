@@ -122,25 +122,26 @@ class Doomcrawl:
             elif config.collision_debug:
                 print("colliding down")
 
-        if keys[pygame.K_q]:
+        if keys[pygame.K_q] or keys[pygame.K_ESCAPE]:
             self.running = False
 
     def create_help_surface(self):
         help_surface = pygame.Surface((config.viewport_x, config.viewport_y), pygame.SRCALPHA)
-        text =  "      Q      Quit\n" \
-                "WASD    Move\n" \
-                "      T      Initialise triangulation\n" \
-                "      F      Triangulate all\n" \
-                "      E      Triangulate one point\n" \
+        text =  "Esc, Q        Quit\n" \
+                "WASD        Move\n" \
+                "      R          Randomise another room\n" \
+                "      T          Initialise triangulation\n" \
+                "      F          Triangulate all\n" \
+                "      E          Triangulate one point\n" \
                 "    F1 or H to display this again\n" \
                 "        any key to continue"
 
         line_height = self.font.get_sized_height()
-        x, y = config.thickness * 4, config.thickness * 4
+        x, y = config.thickness * 4, config.thickness * 3
         for line in text.splitlines():
             self.font.render_to(help_surface, (x, y),
                                 line, config.color["light1"])
-            y += line_height + config.thickness
+            y += line_height + config.thickness / 2
 
         return help_surface
 

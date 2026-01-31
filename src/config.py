@@ -7,8 +7,8 @@ visualizer_debug = False
 delay_visualisation = True
 random_rooms = True
 
-viewport_x = 1800
-viewport_y = 1000
+viewport_x = 1200
+viewport_y = 700
 target_fps = 60
 
 thickness = min(viewport_x, viewport_y) // 40
