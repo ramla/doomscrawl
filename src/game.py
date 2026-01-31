@@ -14,16 +14,20 @@ class Doomcrawl:
         self.viewport = pygame.display.set_mode((config.viewport_x,config.viewport_y),
                                                 pygame.RESIZABLE)
         pygame.display.set_caption('Doomscrawl')
-        self.visualizer = Visualizer(self.viewport)
+        pygame.font.init()
+        self.font = pygame.font.Font(config.FONTFILE, config.thickness)
+        self.help_surface = self.create_help_surface()
 
         if rooms:
             config.random_rooms = False
         self.dungeon = Dungeon((config.viewport_x, config.viewport_y), rooms)
         self.player = Player(self.dungeon.player_start_pos, (config.thickness, config.thickness))
+        self.visualizer = Visualizer(self.viewport)
         self.bw = BowyerWatson(visualizer_queue=self.visualizer.event_queue)
         self.step_triangulation = False
         self.keep_triangulating = False
         self.running = True
+        self.helping = True
 
     def start(self):
         self.loop(config.target_fps)
@@ -63,6 +67,9 @@ class Doomcrawl:
                 self.dungeon.draw_collision_overlay(self.viewport)
                 self.player.draw_collision_overlay(self.viewport)
 
+            if self.helping:
+                self.show_help()
+
             pygame.display.flip()
 
     def process_events(self):
@@ -70,6 +77,7 @@ class Doomcrawl:
             if event.type == pygame.QUIT:
                 self.running = False
             if event.type == pygame.KEYDOWN:
+                # self.helping = False
                 if event.key == pygame.K_r:# and config.random_rooms:
                     self.dungeon.add_room()
                 if event.key == pygame.K_t:
@@ -78,8 +86,9 @@ class Doomcrawl:
                     self.step_triangulation = True
                 if event.key == pygame.K_f:
                     self.keep_triangulating = True
-
-
+                if event.key == pygame.K_F1 or \
+                   event.key == pygame.K_h:
+                    self.helping = True
 
     def process_key_input(self):
         keys = pygame.key.get_pressed()
@@ -114,3 +123,19 @@ class Doomcrawl:
 
         if keys[pygame.K_q]:
             self.running = False
+
+    def create_help_surface(self):
+        # help_surface = pygame.Surface((config.viewport_x, config.viewport_y), pygame.SRCALPHA)
+        help_surface = self.font.render(\
+            "Q      Quit\n" \
+            "WASD   Move\n" \
+            "T      Initialise triangulation\n" \
+            "F      Triangulate all\n" \
+            "E      Triangulate one point\n" \
+            "F1 or H to display this again\n" \
+            "   any key to continue",
+            True, config.color["light1"], None)
+        return help_surface
+
+    def show_help(self):
+        self.viewport.blit(self.help_surface, (0,0))

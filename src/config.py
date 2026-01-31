@@ -37,6 +37,8 @@ color_vertex_active = color["hilite2"]
 color_circumcircle = color["col6"]
 color_circumcircle_fill = color["fill1"]
 
+FONTFILE = "assets/WarsawGothic-BnBV.otf"
+
 room_size_min = (thickness*3, thickness*3)
 room_size_max = (viewport_x//4, viewport_y//3)
 
