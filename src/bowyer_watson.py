@@ -13,15 +13,17 @@ class BowyerWatson:
         self.edges = {}
         self.triangles = {}
         self.triangles_with_edge = {}
+        self.initialised = False
         self.finished = True
         self.add_points(points)
 
     def add_points(self, points):
-        if points:
+        if points and not self.initialised:
             self.next_points.extend(list(set(points)))
             self.points = list(set(self.points + points))
             self.create_super_tri()
             self.finished = False
+            self.initialised = True
 
     def iterate_once(self):
         try:
@@ -31,6 +33,7 @@ class BowyerWatson:
             # print("finishing triangulation")
             self.remove_super_tri()
             self.finished = True
+            self.initialised = False
 
     def triangulate_point(self, point):
         new_vertex = Vertex(point[0],point[1])
