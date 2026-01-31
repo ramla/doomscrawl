@@ -1,0 +1,4 @@
+[run]
+source = src
+
+omit = src/**/__init__.py,src/tests/**,src/visualizer.py,src/main.py,src/game.py,src/dungeon.py,src/config.py,src/player.py
