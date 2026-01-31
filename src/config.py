@@ -21,6 +21,8 @@ color = {
     "col3":     pygame.Color(74,25,66),     # blackberry cream
     "col4":     pygame.Color(9,161,41),     # medium jungle
     "col5":     pygame.Color(112,3,83),     # crimson violet
+    "col6":     pygame.Color(119,32,20),    # dark wine
+    "fill1":    pygame.Color(175,67,25,31),# rusty spice
     "hilite1":  pygame.Color(89,195,195),   # strong cyan
     "hilite2":  pygame.Color(244,91,105),   # bubblegum pink
     "hilite3":  pygame.Color(237,240,96),   # canary yellow
@@ -32,6 +34,8 @@ color_edge = color["col3"]
 color_edge_active = color["col4"]
 color_vertex = color["col5"]
 color_vertex_active = color["hilite2"]
+color_circumcircle = color["col6"]
+color_circumcircle_fill = color["fill1"]
 
 room_size_min = (thickness*3, thickness*3)
 room_size_max = (viewport_x//4, viewport_y//3)

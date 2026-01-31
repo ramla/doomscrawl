@@ -8,7 +8,8 @@ class BowyerWatson:
         self.visualizer_queue = visualizer_queue
         self.points = []
         self.next_points = deque()
-        self.super_verts = []
+        self.super_verts = None
+        self.super_tri_key = None
         self.edges = {}
         self.triangles = {}
         self.triangles_with_edge = {}
@@ -38,12 +39,16 @@ class BowyerWatson:
         self.visualize_new(new_vertex, active=True, reset_active=True)
         for triangle in self.triangles.values():
             if triangle.vertex_in_circumcircle(new_vertex):
+                #visualise circle
+                triangle.visualize_circle(self.visualizer_queue)
                 bad_triangles.add(triangle)
                 for edge in triangle.get_edges():
                     if not edge.get_key() in self.edges:
                         self.edges[edge.get_key()] = edge
                     self.visualize_new(edge, active=True, reset_active=True)
-                    pass #visualise bad triangle
+                    #visualise bad triangle
+                    self.visualize_activate(triangle)
+                triangle.visualize_remove_circle(self.visualizer_queue)
         bad_tri_edgecount = {}
         for triangle in bad_triangles:
             for edge in triangle.get_edges():
@@ -72,14 +77,18 @@ class BowyerWatson:
 
     def create_super_tri(self):
         if self.points:
-            self.super_verts = self.get_super_vertices()
-            super_edges = ( Edge(self.super_verts[0], self.super_verts[1]),
-                            Edge(self.super_verts[1], self.super_verts[2]),
-                            Edge(self.super_verts[0], self.super_verts[2])
-                        )
-            for edge in super_edges:
-                self.edges[edge.get_key()] = edge
-            self.add_triangle(*self.super_verts)
+            if self.super_verts == None:
+                self.super_verts = self.get_super_vertices()
+                super_edges = ( Edge(self.super_verts[0], self.super_verts[1]),
+                                Edge(self.super_verts[1], self.super_verts[2]),
+                                Edge(self.super_verts[0], self.super_verts[2])
+                            )
+                for edge in super_edges:
+                    self.edges[edge.get_key()] = edge
+                self.super_tri_key = self.add_triangle(*self.super_verts)
+            else:
+                self.grow_super_triangle()
+                self.visualize_new(self.triangles[self.super_tri_key])
         if self.visualizer_queue:
             for vertex in self.super_verts:
                 self.visualize_new(vertex)
@@ -88,17 +97,21 @@ class BowyerWatson:
         margin = config.super_tri_margin
         xs, ys = zip(*self.points)
         min_x, min_y, max_x, max_y = min(xs), min(ys), max(xs), max(ys)
-        vertex_a = Vertex(min_x - margin, min_y - margin)
-        vertex_b = Vertex(min_x - margin, max_y*2 + margin)
-        vertex_c = Vertex(max_x*2 + margin, min_y - margin)
+        min_any, max_any = min(min_x, min_y), max(max_x, max_y)
+        vertex_a = Vertex(min_any - margin, min_any - margin)
+        vertex_b = Vertex(min_any - margin, max_any*2 + margin)
+        vertex_c = Vertex(max_any*2 + margin, min_any - margin)
         return (vertex_a, vertex_b, vertex_c)
 
     def remove_super_tri(self):
         for triangle in list(self.triangles.values()):
-            for vertex in self.super_verts:
+            for super_vertex in self.super_verts:
                 #visualise super vertex?
-                if vertex in triangle.get_vertices():
-                    self.remove_triangle(triangle)
+                if super_vertex in triangle.get_vertices():
+                    if triangle.get_key() != self.super_tri_key:
+                        self.visualize_remove(triangle)
+                        # self.remove_triangle(triangle)
+            self.visualize_remove(super_vertex)
 
     def add_triangle(self, vertex_a, vertex_b, vertex_c):
         triangle = Triangle(vertex_a, vertex_b, vertex_c, self.edges)
@@ -115,6 +128,7 @@ class BowyerWatson:
             self.triangles_with_edge[key] += 1
         #visualise new triangle
         self.visualize_new(triangle)
+        return triangle.get_key()
 
     def remove_triangle(self, triangle):
         if not triangle.get_key() in self.triangles:
@@ -154,8 +168,22 @@ class BowyerWatson:
             elif isinstance(object, Triangle):
                 self.visualizer_queue.put(methodcaller("new_triangle", object, active, reset_active))
 
+    def visualize_activate(self, object, reset_active=False):
+        if self.visualizer_queue:
+            if isinstance(object, Vertex):
+                self.visualizer_queue.put(methodcaller("activate_vertex", object, reset_active))
+            elif isinstance(object, Edge):
+                self.visualizer_queue.put(methodcaller("activate_edge", object, reset_active))
+            elif isinstance(object, Triangle):
+                self.visualizer_queue.put(methodcaller("activate_triangle", object, reset_active))
+
     def is_valid_triangle(self, vertex_a, vertex_b, vertex_c):
         return vertex_a != vertex_b and vertex_b != vertex_c and vertex_a != vertex_c
+
+    def grow_super_triangle(self):
+        new_vertices = self.get_super_vertices()
+        for i in range(3):
+            self.super_verts[i].x, self.super_verts[i].y = new_vertices[i].x, new_vertices[i].y
 
 class Vertex:
     def __init__(self, x, y):
@@ -178,6 +206,9 @@ class Vertex:
 
     def __repr__(self):
         return f"Vertex({self.x}, {self.y})"
+
+    def get_coord(self):
+        return (self.x, self.y)
 
     def distance_from(self, vertex):
         return sqrt((self.x - vertex.x)**2 + (self.y - vertex.y)**2)
@@ -334,3 +365,12 @@ class Triangle:
                 continue
             valid_edges.append(edge)
         return valid_edges
+
+    def visualize_circle(self, visualizer_queue):
+        visualizer_queue.put(methodcaller("new_circle", self))
+
+    def visualize_remove_circle(self, visualizer_queue):
+        visualizer_queue.put(methodcaller("remove_circle", self))
+
+    def get_circumcircle_key(self):
+        return "VCCir" + str(self)

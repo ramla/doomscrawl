@@ -75,6 +75,12 @@ class Visualizer:
         if active:
             self.active_triangles.append(self.entities[triangle])
 
+    def new_circle(self, triangle):
+        """Add the circumcircle of the triangle to entities to draw"""
+        circle = VisualCircumcircle(triangle)
+        triangle.circumcircle_key = f"{circle}"
+        self.entities[circle.get_key()] = circle
+
     def remove_vertex(self, vertex):
         if config.visualizer_debug:
             print("removing vertex", vertex)
@@ -101,6 +107,29 @@ class Visualizer:
         except KeyError:
             if config.visualizer_debug:
                 print("visualizer.remove_triangle() KeyError:", triangle)
+
+    def remove_circle(self, triangle):
+        if config.visualizer_debug:
+            print("entities:",self.entities)
+        try:
+            self.entities.pop(triangle.get_circumcircle_key())
+            print("succesfully popped")
+        except KeyError:
+            if config.visualizer_debug:
+                print("visualizer.remove_circle() KeyError:", triangle.circumcircle_key, "for", triangle)
+
+    def activate_triangle(self, triangle, reset_active):
+        if reset_active:
+            for entity in self.entities:
+                if isinstance(entity, VisualTriangle):
+                    entity.deactivate()
+                    if config.visualizer_debug:
+                        print("deactivating triangle",triangle)
+        try:
+            self.entities[triangle.get_key()].activate()
+        except KeyError:
+            if config.visualizer_debug:
+                print("visualizer.activate_triangle() KeyError:", triangle)
 
     def animate_entity(self, key, anim_func, next_event_delay=None):
         if next_event_delay == None or not config.delay_visualisation:
@@ -142,6 +171,7 @@ class VisualVertex:
     def activate(self):
         self.active = True
         self.color = self.color_active
+        self.anim_new()
 
     def deactivate(self):
         self.active = False
@@ -202,3 +232,24 @@ class VisualTriangle:
     def deactivate(self):
         self.active = False
         self.color = self.color_normal
+
+
+class VisualCircumcircle:
+    def __init__(self, triangle, width=2, color=config.color_circumcircle):
+        self.keystring = "VCCir" + str(triangle)
+        self.width = width
+        self.color_normal = color
+        self.color = self.color_normal
+        self.color_fill = config.color_circumcircle_fill
+        self.radius = triangle.circumcircle_radius
+        self.center = triangle.circumcenter.get_coord()
+        self.blit_dest = (self.center[0] - self.radius, self.center[1] - self.radius)
+        self.alpha_surface = pygame.Surface((self.radius*2, self.radius*2), pygame.SRCALPHA)
+        pygame.draw.circle(self.alpha_surface, self.color_fill, (self.radius, self.radius), self.radius, 0)
+        pygame.draw.circle(self.alpha_surface, self.color, (self.radius, self.radius), self.radius, int(self.width))
+
+    def draw(self, viewport, frame_time):
+        viewport.blit(self.alpha_surface, self.blit_dest)
+
+    def get_key(self):
+        return self.keystring
