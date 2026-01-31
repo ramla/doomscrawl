@@ -54,6 +54,7 @@ class Doomcrawl:
                         self.keep_triangulating = False
                 elif self.step_triangulation:
                     self.bw.iterate_once()
+                    self.step_triangulation = False
 
             self.visualizer.visualize(frame_time)
 
