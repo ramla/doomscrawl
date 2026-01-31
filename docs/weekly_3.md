@@ -4,7 +4,7 @@ The project feels like a mess already. The visualisation has its own bugs which 
 
 Reading the Rebay paper again I realise I should just have screen edges as (initial) boundary, not an oversized triangle.
 
-Breaking up the algorithm to run one iteration at a time took most of my time this week, and all bugs introduced along with it in both the algorithm itself and the visualisation. A good crunch was still required to meet some more of week's goals. 
+Breaking up the algorithm to run one iteration at a time took most of my time this week, and all bugs introduced along with it in both the algorithm itself and the visualisation. A good crunch was still required to meet some more of week's goals. Number of hours worked this week closed in at 21.
 
 The next chaos is to make further triangulations work after the first one. Simple enough if I just do it all over again, but it should be possible to just add a point wherever. I'm also second guessing the whole visualisation architecture. I should just have the visual classes (or just class) inherit Verts/Edges/Tris.
 
