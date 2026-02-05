@@ -24,8 +24,14 @@ class Visualizer:
                 self.accumulator = self.delay_min
             except queue.Empty:
                 break
+        to_delete = []
         for entity in self.entities.values():
             entity.draw(self.viewport, frame_time)
+            if isinstance(entity, VisualCircumcircle):
+                if entity.delete_me and entity.accumulator <= 0:
+                    to_delete.append(entity)
+        for entity in to_delete:
+            self.entities.pop(entity.keystring)
 
     def process_all(self):
         while not self.event_queue.empty():
@@ -118,9 +124,9 @@ class Visualizer:
         if config.visualizer_debug:
             print("entities:",self.entities)
         try:
-            self.entities.pop(triangle.get_circumcircle_key())
+            self.entities[triangle.get_circumcircle_key()].anim_drop()
             if config.visualizer_debug:
-                print("succesfully popped")
+                print("circle drop animation initiated")
         except KeyError:
             if config.visualizer_debug:
                 print("visualizer.remove_circle() KeyError:", triangle.circumcircle_key,
@@ -184,7 +190,7 @@ class VisualVertex:
             self.radius = self.base_radius
         pygame.draw.circle(viewport, self.color, self.center, self.radius)
 
-    def anim_new(self, duration=config.vertex_anim_duration, scale=config.vertex_anim_pop_scale):
+    def anim_new(self, duration=config.vertex_anim_duration, scale=config.vertex_anim_new_scale):
         self.accumulator = duration
         self.radius = scale*self.base_radius
         self.radius_rate = (self.radius - self.base_radius) / (duration * config.target_fps)
@@ -192,7 +198,7 @@ class VisualVertex:
     def activate(self):
         self.active = True
         self.color = self.color_active
-        self.anim_new()
+        self.anim_new(scale=2*config.vertex_anim_new_scale)
 
     def deactivate(self):
         self.active = False
@@ -271,22 +277,38 @@ class VisualTriangle:
 
 class VisualCircumcircle:
     def __init__(self, triangle, width=2, color=config.color_circumcircle):
+        self.accumulator = 0
+        self.delete_me = False
         self.keystring = "VCCir" + str(triangle)
         self.width = width
         self.color_normal = color
-        self.color = self.color_normal
-        self.color_fill = config.color_circumcircle_fill
+        self.color = pygame.Color(self.color_normal)
+        self.color_fill = pygame.Color(config.color_circumcircle_fill)
         self.radius = triangle.circumcircle_radius
         self.center = triangle.circumcenter.get_coord()
+        self.alpha_surface = None
+        self.draw_surface()
+
+    def draw_surface(self):
         self.blit_dest = (self.center[0] - self.radius, self.center[1] - self.radius)
         self.alpha_surface = pygame.Surface((self.radius*2, self.radius*2), pygame.SRCALPHA)
-        pygame.draw.circle(self.alpha_surface, self.color_fill, 
+        pygame.draw.circle(self.alpha_surface, self.color_fill,
                            (self.radius, self.radius), self.radius, 0)
-        pygame.draw.circle(self.alpha_surface, self.color, 
+        pygame.draw.circle(self.alpha_surface, self.color,
                            (self.radius, self.radius), self.radius, int(self.width))
 
     def draw(self, viewport, frame_time):
+        if self.accumulator > 0:
+            self.radius *= config.circumcircle_anim_drop_scale
+            self.accumulator -= frame_time
+            self.color.a = int(config.circumcircle_anim_drop_scale * self.color.a)
+            self.color_fill.a = int(config.circumcircle_anim_drop_scale * self.color_fill.a)
+            self.draw_surface()
         viewport.blit(self.alpha_surface, self.blit_dest)
+
+    def anim_drop(self, duration=config.circumcircle_anim_duration):
+        self.accumulator = duration
+        self.delete_me = True
 
     def get_key(self):
         return self.keystring
