@@ -1,7 +1,9 @@
 import unittest
-from bowyer_watson import BowyerWatson, Vertex, Edge, Triangle
+import pygame
 from math import sqrt
 import random
+from bowyer_watson import BowyerWatson, Vertex, Edge, Triangle
+import visualizer
 
 
 class TestEdge(unittest.TestCase):
@@ -121,14 +123,48 @@ class TestBowyerWatson(unittest.TestCase):
     def test_hard_points(self):
         self.bw.add_points(self.hard_points)
         self.bw.triangulate_all()
-        print(self.bw.triangles.values())
+        # print(self.bw.triangles.values())
 
     def test_random_points_float(self):
         self.random_points_float.triangulate_all()
-        print(self.bw.triangles.values())
+        # print(self.bw.triangles.values())
 
     def test_super_vert_generation_issue_or_circumcenter_logic(self):
         self.bw.add_points(self.point_of_difficulty)
-        print(self.bw.triangles.values())
+        # print(self.bw.triangles.values())
         self.bw.triangulate_all()
-        print(self.bw.triangles.values())
+        # print(self.bw.triangles.values())
+
+
+class TestVisualization(unittest.TestCase):
+    def setUp(self):
+        min_coords = (0, 0)
+        max_coords = (100, 100)
+        surf_size = max_coords[0]*2,max_coords[1]*2
+        n = 3#10**2
+        dump_surface = pygame.Surface(surf_size)
+        # points=self.get_random_points_float(n, min_coords, max_coords)
+        points = [(10,20), (15,22), (25,30)]
+        self.visual = visualizer.Visualizer(dump_surface)
+        self.bw = BowyerWatson(points=points, visualizer_queue=self.visual.event_queue)
+
+    def get_random_points_float(self, n, min_coords, max_coords):
+        return [(random.uniform(min_coords[0],max_coords[0]),
+                 random.uniform(min_coords[1],max_coords[1])) for _ in range(n)]
+
+    def test_visualization_triangulation_equality(self):
+        self.bw.triangulate_all()
+        self.visual.process_all()
+        vis_entities = [ entity.get_bw_key()
+            for entity in self.visual.entities.values()
+            if entity.__class__ == visualizer.VisualTriangle
+        ]
+        for triangle in self.bw.triangles.values():
+            print(triangle.get_key())
+        bw_result = [obj.get_key() for obj in self.bw.triangles.values()]
+        # print("bw:",bw_result,"\n\n")
+        # print("vis:",vis_entities)
+
+        print("common objs:", set(bw_result) & set(vis_entities))
+        print("set_vis:", set(vis_entities))
+        self.assertEqual(set(bw_result), set(vis_entities))

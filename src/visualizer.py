@@ -27,6 +27,12 @@ class Visualizer:
         for entity in self.entities.values():
             entity.draw(self.viewport, frame_time)
 
+    def process_all(self):
+        while not self.event_queue.empty():
+            event = self.event_queue.get_nowait()
+            event(self)
+            self.accumulator = 0
+
     def list_entities(self):
         verts, edges, tris = [], [], []
         for entity in self.entities.values():
@@ -190,7 +196,9 @@ class VisualEdge:
         if active:
             self.activate()
         else:
-            self.deactivate()    
+            self.deactivate()
+        self.bw_id = id(edge)
+        self.bw_key = edge.get_key()
 
     def draw(self, viewport, frame_time):
         pygame.draw.line(viewport, self.color, self.a, self.b, int(self.width))
@@ -206,6 +214,12 @@ class VisualEdge:
         self.active = False
         self.color = self.color_normal
 
+    def get_bw_id(self):
+        return self.bw_id
+
+    def get_bw_key(self):
+        return self.bw_key
+
 
 class VisualTriangle:
     def __init__(self, triangle, width, active, color=config.color_tri):
@@ -218,6 +232,8 @@ class VisualTriangle:
             self.activate()
         else:
             self.deactivate()
+        self.bw_id = id(triangle)
+        self.bw_key = triangle.get_key()
 
     def draw(self, viewport, frame_time):
         pygame.draw.polygon(viewport, self.color, self.points, int(self.width))
@@ -232,6 +248,12 @@ class VisualTriangle:
     def deactivate(self):
         self.active = False
         self.color = self.color_normal
+
+    def get_bw_id(self):
+        return self.bw_id
+
+    def get_bw_key(self):
+        return self.bw_key
 
 
 class VisualCircumcircle:
