@@ -145,10 +145,9 @@ class BowyerWatson:
     def remove_super_tri(self):
         for triangle in list(self.triangles.values()):
             for super_vertex in self.super_verts:
-                #visualise super vertex?
+                self.visualize_activate(super_vertex, reset_active=True)
                 if super_vertex in triangle.get_vertices():
                     if triangle.get_key() != self.super_tri_key:
-                        # self.visualize_remove(triangle)
                         self.remove_triangle(triangle)
                 self.visualize_remove(super_vertex)
 
@@ -184,8 +183,6 @@ class BowyerWatson:
                     if config.visualizer_debug:
                         print("bw.KeyError:",edge)
         self.visualize_remove(triangle)
-
-        #visualise (bad, parameter?) triangle removal
 
     def visualize_remove(self, bw_object):
         if self.visualizer_queue:
