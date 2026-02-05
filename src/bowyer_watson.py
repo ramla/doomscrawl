@@ -377,11 +377,9 @@ class Triangle:
             c_2 = edges[1].get_pb_intercept()
             det = a_1 - a_2
             if det == 0:
-                print("HELP!!!!!!!!!!!!")
-                print("verts",{self.get_vertices()})
-                #fails when points are in a straight line
-                #need to adjust super verts if this happens?
-                #(verts {(Vertex(-50, 70), Vertex(70, -50), Vertex(10, 10))})
+                print("HELP!!!!!!!!!!!! BR", self)
+                # fails when points are in a straight line
+                # but this is checked for with BowyerWatson.is_valid_triangle()
             x = (c_2 - c_1) / det
             y = ((a_1 * c_2) - (a_2 * c_1)) / det
             self.circumcenter = Vertex(x,y)

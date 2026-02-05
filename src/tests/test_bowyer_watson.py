@@ -107,9 +107,9 @@ class TestBowyerWatson(unittest.TestCase):
         self.bw = BowyerWatson()
 
         self.hard_points = [(0,0),(1,1),(1,0), (2,0), (1,1), (2,2), (1,1e-12), (2,2e-12),(3,0)]
-        self.point_of_difficulty = [(0,0),(1,1),(1,0)] #super tri points are created so that a point such as this 
-                                        #will form a triangle with all points on a single line
-                                        #at least until I fix it
+        self.point_of_difficulty = [(0,0),(1,1),(1,0)] #super tri points are created so that
+                                        #points such as these will form a triangle with all
+                                        #points on a single line (fixed)
         min_coords = (0, 0)
         max_coords = (100, 100)
         n = 10**2
