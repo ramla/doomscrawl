@@ -100,11 +100,11 @@ class BowyerWatson:
                 self.add_triangle(vertex_a, vertex_b, new_vertex)
 
     def iterate_once(self):
-        try:
+        while self.next_points:
             point = self.next_points.popleft()
             self.triangulate_point(point)
-        except IndexError:
-            # print("finishing triangulation")
+            break
+        if not self.next_points:
             self.remove_super_tri()
             self.ready = True
 
@@ -199,23 +199,38 @@ class BowyerWatson:
     def visualize_new(self, bw_object, active=False, reset_active=False):
         if self.visualizer_queue: 
             if isinstance(bw_object, Vertex):
-                self.visualizer_queue.put(methodcaller("new_vertex", bw_object, active, reset_active))
+                self.visualizer_queue.put(methodcaller("new_vertex",
+                                                       bw_object, active, reset_active))
             elif isinstance(bw_object, Edge):
-                self.visualizer_queue.put(methodcaller("new_edge", bw_object, active, reset_active))
+                self.visualizer_queue.put(methodcaller("new_edge",
+                                                       bw_object, active, reset_active))
             elif isinstance(bw_object, Triangle):
-                self.visualizer_queue.put(methodcaller("new_triangle", bw_object, active, reset_active))
+                self.visualizer_queue.put(methodcaller("new_triangle",
+                                                       bw_object, active, reset_active))
 
     def visualize_activate(self, bw_object, reset_active=False):
         if self.visualizer_queue:
             if isinstance(bw_object, Vertex):
-                self.visualizer_queue.put(methodcaller("activate_vertex", bw_object, reset_active))
+                self.visualizer_queue.put(methodcaller("activate_vertex",
+                                                       bw_object, reset_active))
             elif isinstance(bw_object, Edge):
-                self.visualizer_queue.put(methodcaller("activate_edge", bw_object, reset_active))
+                self.visualizer_queue.put(methodcaller("activate_edge",
+                                                       bw_object, reset_active))
             elif isinstance(bw_object, Triangle):
-                self.visualizer_queue.put(methodcaller("activate_triangle", bw_object, reset_active))
+                self.visualizer_queue.put(methodcaller("activate_triangle",
+                                                       bw_object, reset_active))
 
     def is_valid_triangle(self, vertex_a, vertex_b, vertex_c):
-        return vertex_a != vertex_b and vertex_b != vertex_c and vertex_a != vertex_c
+        two_or_more_same_points = vertex_a == vertex_b \
+                               or vertex_b == vertex_c \
+                               or vertex_a == vertex_c
+        edge_a, edge_b = Edge(vertex_a, vertex_b), Edge(vertex_b, vertex_c)
+        slope_a, slope_b = edge_a.get_slope(), edge_b.get_slope()
+        if two_or_more_same_points or slope_a == slope_b:
+            print("invalid triangle: ", vertex_a, vertex_b, vertex_c,
+                  f"\n  slopes {slope_a}, {slope_b}")
+            return False
+        return True
 
     def grow_super_triangle(self):
         new_vertices = self.get_super_vertices()
