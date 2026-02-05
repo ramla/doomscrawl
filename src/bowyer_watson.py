@@ -148,9 +148,9 @@ class BowyerWatson:
                 #visualise super vertex?
                 if super_vertex in triangle.get_vertices():
                     if triangle.get_key() != self.super_tri_key:
-                        self.visualize_remove(triangle)
-                        # self.remove_triangle(triangle)
-            self.visualize_remove(super_vertex)
+                        # self.visualize_remove(triangle)
+                        self.remove_triangle(triangle)
+                self.visualize_remove(super_vertex)
 
     def add_triangle(self, vertex_a, vertex_b, vertex_c):
         triangle = Triangle(vertex_a, vertex_b, vertex_c, self.edges)

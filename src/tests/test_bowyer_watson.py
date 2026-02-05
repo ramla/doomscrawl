@@ -152,7 +152,7 @@ class TestVisualization(unittest.TestCase):
         return [(random.uniform(min_coords[0],max_coords[0]),
                  random.uniform(min_coords[1],max_coords[1])) for _ in range(n)]
 
-    def test_visualization_triangulation_equality(self):
+    def test_visualization_triangulation_equality_triangles(self):
         self.bw.triangulate_all()
         self.visual.process_all()
         vis_entities = [ entity.get_bw_key()
