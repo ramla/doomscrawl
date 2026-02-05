@@ -126,6 +126,19 @@ class Visualizer:
                 print("visualizer.remove_circle() KeyError:", triangle.circumcircle_key,
                       "for", triangle)
 
+    def activate_vertex(self, vertex, reset_active):
+        if reset_active:
+            for entity in self.entities:
+                if isinstance(entity, VisualVertex):
+                    entity.deactivate()
+                    if config.visualizer_debug:
+                        print("deactivating vertex",vertex)
+        try:
+            self.entities[vertex].activate()
+        except KeyError:
+            if config.visualizer_debug:
+                print("visualizer.activate_vertex() KeyError:", vertex)
+
     def activate_triangle(self, triangle, reset_active):
         if reset_active:
             for entity in self.entities:
