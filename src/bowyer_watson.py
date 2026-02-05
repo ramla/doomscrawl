@@ -84,7 +84,7 @@ class BowyerWatson:
         bad_tri_edgecount = {}
         for triangle in bad_triangles:
             for edge in triangle.get_edges():
-                key = edge.get_key() 
+                key = edge.get_key()
                 if not key in bad_tri_edgecount:
                     bad_tri_edgecount[key] = 0
                 bad_tri_edgecount[key] += 1

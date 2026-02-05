@@ -1,7 +1,7 @@
 import unittest
-import pygame
 from math import sqrt
 import random
+import pygame
 from bowyer_watson import BowyerWatson, Vertex, Edge, Triangle
 import visualizer
 
@@ -159,12 +159,9 @@ class TestVisualization(unittest.TestCase):
             for entity in self.visual.entities.values()
             if entity.__class__ == visualizer.VisualTriangle
         ]
-        for triangle in self.bw.triangles.values():
-            print(triangle.get_key())
+        # for triangle in self.bw.triangles.values():
+        #     print(triangle.get_key())
         bw_result = [obj.get_key() for obj in self.bw.triangles.values()]
-        # print("bw:",bw_result,"\n\n")
-        # print("vis:",vis_entities)
-
-        print("common objs:", set(bw_result) & set(vis_entities))
-        print("set_vis:", set(vis_entities))
+        # print("common objs:", set(bw_result) & set(vis_entities))
+        # print("set_vis:", set(vis_entities))
         self.assertEqual(set(bw_result), set(vis_entities))
