@@ -3,6 +3,7 @@ import pygame
 collision_debug = False
 room_debug = False  #print room list to terminal when passing room centers to 
                     #triangulation, among other things
+bw_debug = True
 visualizer_debug = False
 delay_visualisation = True
 random_rooms = True
@@ -42,9 +43,13 @@ FONTFILE = "assets/WarsawGothic-BnBV.otf"
 room_size_min = (thickness*3, thickness*3)
 room_size_max = (viewport_x//4, viewport_y//3)
 
-vertex_anim_duration = 0.3
+vertex_anim_duration = 1/60
+if delay_visualisation:
+    vertex_anim_duration = 0.3
 vertex_anim_new_scale = 1.5
-circumcircle_anim_duration = 0.5
+circumcircle_anim_duration = 1/60
+if delay_visualisation:
+    circumcircle_anim_duration = 0.5
 circumcircle_anim_drop_scale = 0.95
 vertex_radius = thickness/3
 edge_width = thickness/7

@@ -55,7 +55,7 @@ class BowyerWatson:
             points: a list of tuples of x and y coordinates
         """
         if points and self.ready:
-            self.next_points.extend(list(set(points)))
+            self.next_points.extend(points)
             self.points = list(set(self.points + points))
             self.create_super_tri()
             self.ready = False
@@ -69,11 +69,15 @@ class BowyerWatson:
             point: tuple of x,y coordinates expected to lie within the boudaries
         """
         new_vertex = Vertex(point[0],point[1])
+        if config.bw_debug:
+            print("triangulating", new_vertex)
         bad_triangles = set()
         self.visualize_new(new_vertex, active=True, reset_active=True)
         for triangle in self.triangles.values():
             if triangle.vertex_in_circumcircle(new_vertex):
                 triangle.visualize_circle(self.visualizer_queue)
+                for vertex in triangle.get_vertices():
+                    self.visualize_activate(vertex)
                 bad_triangles.add(triangle)
                 for edge in triangle.get_edges():
                     if not edge.get_key() in self.edges:
@@ -96,6 +100,8 @@ class BowyerWatson:
             self.remove_triangle(triangle)
         for edge in polygon:
             vertex_a, vertex_b = edge.get_vertices()
+            if config.bw_debug:
+                print("validating triangle: new vert with edge:",edge)
             if self.is_valid_triangle(vertex_a, vertex_b, new_vertex):
                 self.add_triangle(vertex_a, vertex_b, new_vertex)
 
@@ -224,7 +230,8 @@ class BowyerWatson:
         edge_a, edge_b = Edge(vertex_a, vertex_b), Edge(vertex_b, vertex_c)
         slope_a, slope_b = edge_a.get_slope(), edge_b.get_slope()
         if two_or_more_same_points or slope_a == slope_b:
-            print("invalid triangle: ", vertex_a, vertex_b, vertex_c,
+            if config.bw_debug:
+                print("invalid triangle: ", vertex_a, vertex_b, vertex_c,
                   f"\n  slopes {slope_a}, {slope_b}")
             return False
         return True
@@ -389,9 +396,10 @@ class Triangle:
             c_2 = edges[1].get_pb_intercept()
             det = a_1 - a_2
             if det == 0:
-                print("HELP!!!!!!!!!!!! BR", self)
-                # fails when points are in a straight line
-                # but this is checked for with BowyerWatson.is_valid_triangle()
+                if config.bw_debug:
+                    print("HELP!!!!!!!!!!!! BR", self)
+                    # fails when points are in a straight line
+                    # but this is checked for with BowyerWatson.is_valid_triangle()
             x = (c_2 - c_1) / det
             y = ((a_1 * c_2) - (a_2 * c_1)) / det
             self.circumcenter = Vertex(x,y)
