@@ -299,7 +299,7 @@ class VisualCircumcircle:
 
     def draw(self, viewport, frame_time):
         if self.accumulator > 0:
-            self.radius *= config.circumcircle_anim_drop_scale
+            # self.radius *= config.circumcircle_anim_drop_scale
             self.accumulator -= frame_time
             self.color.a = int(config.circumcircle_anim_drop_scale * self.color.a)
             self.color_fill.a = int(config.circumcircle_anim_drop_scale * self.color_fill.a)
