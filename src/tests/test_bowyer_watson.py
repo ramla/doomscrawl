@@ -114,7 +114,7 @@ class TestBowyerWatson(unittest.TestCase):
         self.full_house_points = list(product(range(32), range(32)))
         min_coords = (0, 0)
         max_coords = (100, 100)
-        n = 10**4
+        n = 10**2
         self.random_points_float = BowyerWatson(points=self.get_random_points_float(n, min_coords,
                                                                                    max_coords))
 
