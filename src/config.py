@@ -1,5 +1,6 @@
 import pygame
 
+circumcircle_debug = False
 collision_debug = False
 room_debug = False  #print room list to terminal when passing room centers to 
                     #triangulation, among other things
@@ -7,6 +8,7 @@ bw_debug = True
 visualizer_debug = False
 delay_visualisation = True
 random_rooms = True
+draw_coords = False
 
 viewport_x = 1200
 viewport_y = 700
@@ -23,7 +25,8 @@ color = {
     "col4":     pygame.Color(9,161,41),     # medium jungle
     "col5":     pygame.Color(112,3,83),     # crimson violet
     "col6":     pygame.Color(119,32,20),    # dark wine
-    "fill1":    pygame.Color(175,67,25,31),# rusty spice
+    "fill1":    pygame.Color(175,67,25,31), # rusty spice
+    "fill2":    pygame.Color(40,60,70,31),  # 
     "hilite1":  pygame.Color(89,195,195),   # strong cyan
     "hilite2":  pygame.Color(244,91,105),   # bubblegum pink
     "hilite3":  pygame.Color(237,240,96),   # canary yellow
@@ -36,7 +39,7 @@ color_edge_active = color["col4"]
 color_vertex = color["col5"]
 color_vertex_active = color["hilite2"]
 color_circumcircle = color["col6"]
-color_circumcircle_fill = color["fill1"]
+color_circumcircle_fill = color["fill2"]
 
 FONTFILE = "assets/WarsawGothic-BnBV.otf"
 

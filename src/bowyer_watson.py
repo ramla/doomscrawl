@@ -74,8 +74,17 @@ class BowyerWatson:
         bad_triangles = set()
         self.visualize_new(new_vertex, active=True, reset_active=True)
         for triangle in self.triangles.values():
-            if triangle.vertex_in_circumcircle(new_vertex):
-                triangle.visualize_circle(self.visualizer_queue)
+            new_vertex_in_circumcircle = triangle.vertex_in_circumcircle(new_vertex)
+            if not new_vertex_in_circumcircle:
+                color = config.color["col4"]
+                if config.circumcircle_debug:
+                    print(new_vertex,"NOT IN CC OF",triangle)
+            else:
+                color = None
+                if config.circumcircle_debug:
+                    print(new_vertex,"is in CC of",triangle)
+            triangle.visualize_circle(self.visualizer_queue, color=color)
+            if new_vertex_in_circumcircle:
                 for vertex in triangle.get_vertices():
                     self.visualize_activate(vertex)
                 bad_triangles.add(triangle)
@@ -84,7 +93,7 @@ class BowyerWatson:
                         self.edges[edge.get_key()] = edge
                     self.visualize_new(edge, active=True, reset_active=True)
                     self.visualize_activate(triangle)
-                triangle.visualize_remove_circle(self.visualizer_queue)
+            triangle.visualize_remove_circle(self.visualizer_queue)
         bad_tri_edgecount = {}
         for triangle in bad_triangles:
             for edge in triangle.get_edges():
@@ -230,7 +239,7 @@ class BowyerWatson:
         edge_a, edge_b = Edge(vertex_a, vertex_b), Edge(vertex_b, vertex_c)
         slope_a, slope_b = edge_a.get_slope(), edge_b.get_slope()
         if two_or_more_same_points or slope_a == slope_b:
-            if config.bw_debug:
+            if config.circumcircle_debug:
                 print("invalid triangle: ", vertex_a, vertex_b, vertex_c,
                   f"\n  slopes {slope_a}, {slope_b}")
             return False
@@ -418,9 +427,9 @@ class Triangle:
             valid_edges.append(edge)
         return valid_edges
 
-    def visualize_circle(self, visualizer_queue):
+    def visualize_circle(self, visualizer_queue, color=None):
         if visualizer_queue is not None:
-            visualizer_queue.put(methodcaller("new_circle", self))
+            visualizer_queue.put(methodcaller("new_circle", self, color=color))
 
     def visualize_remove_circle(self, visualizer_queue):
         if visualizer_queue is not None:

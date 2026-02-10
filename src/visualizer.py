@@ -1,6 +1,7 @@
 import queue
 from operator import methodcaller
 import pygame
+import pygame.freetype
 import config
 
 
@@ -14,6 +15,8 @@ class Visualizer:
         self.active_vertices = []
         self.active_edges = []
         self.active_triangles = []
+        if config.draw_coords:
+            self.font = pygame.freetype.Font(config.FONTFILE, config.thickness * 1)
 
     def visualize(self, frame_time):
         self.accumulator -= frame_time
@@ -30,6 +33,9 @@ class Visualizer:
             if isinstance(entity, VisualCircumcircle):
                 if entity.delete_me and entity.accumulator <= 0:
                     to_delete.append(entity)
+            elif isinstance(entity, VisualVertex) and config.draw_coords:
+                text_surface = self.create_text_surface(str(entity.center))
+                self.viewport.blit(text_surface, entity.center)
         for entity in to_delete:
             self.entities.pop(entity.keystring)
 
@@ -87,9 +93,9 @@ class Visualizer:
         if active:
             self.active_triangles.append(self.entities[triangle])
 
-    def new_circle(self, triangle):
+    def new_circle(self, triangle, color=None):
         """Add the circumcircle of the triangle to entities to draw"""
-        circle = VisualCircumcircle(triangle)
+        circle = VisualCircumcircle(triangle, color=color)
         triangle.circumcircle_key = f"{circle}"
         self.entities[circle.get_key()] = circle
 
@@ -164,6 +170,15 @@ class Visualizer:
         self.accumulator = next_event_delay
         anim_func(self.entities[key])
 
+    def create_text_surface(self, text):
+        text_surface = pygame.Surface((config.viewport_x, config.viewport_y), pygame.SRCALPHA)
+        line_height = self.font.get_sized_height()
+        x, y = config.thickness * 4, config.thickness * 3
+        for line in text.splitlines():
+            self.font.render_to(text_surface, (x, y),
+                                line, config.color["light1"])
+            y += line_height
+        return text_surface
 
 class VisualVertex:
     def __init__(self, center, radius, active, color=config.color_vertex):
@@ -276,11 +291,13 @@ class VisualTriangle:
 
 
 class VisualCircumcircle:
-    def __init__(self, triangle, width=2, color=config.color_circumcircle):
+    def __init__(self, triangle, width=2, color=None):
         self.accumulator = 0
         self.delete_me = False
         self.keystring = "VCCir" + str(triangle)
         self.width = width
+        if color is None:
+            color = config.color_circumcircle
         self.color_normal = color
         self.color = pygame.Color(self.color_normal)
         self.color_fill = pygame.Color(config.color_circumcircle_fill)
