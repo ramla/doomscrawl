@@ -152,7 +152,7 @@ class BowyerWatson:
         xs, ys = zip(*self.points)
         min_x, min_y, max_x, max_y = min(xs), min(ys), max(xs), max(ys)
         min_any, max_any = min(min_x, min_y), max(max_x, max_y)
-        vertex_a = Vertex(min_any - margin, min_any - margin)
+        vertex_a = Vertex(min_any - max_any, min_any - max_any)
         vertex_b = Vertex(min_any - margin, max_any*2 + margin)
         vertex_c = Vertex(max_any*2 + margin, min_any - margin)
         return (vertex_a, vertex_b, vertex_c)
