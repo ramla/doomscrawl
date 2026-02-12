@@ -152,9 +152,9 @@ class BowyerWatson:
         xs, ys = zip(*self.points)
         min_x, min_y, max_x, max_y = min(xs), min(ys), max(xs), max(ys)
         min_any, max_any = min(min_x, min_y), max(max_x, max_y)
-        vertex_a = Vertex(min_any - max_any, min_any - max_any)
-        vertex_b = Vertex(min_any - margin, max_any*2 + margin)
-        vertex_c = Vertex(max_any*2 + margin, min_any - margin)
+        vertex_a = Vertex(min_any - max_any * 10, min_any - max_any * 10)
+        vertex_b = Vertex(min_any - max_any * 10, max_any * 20)
+        vertex_c = Vertex(max_any * 20, min_any - max_any * 10)
         return (vertex_a, vertex_b, vertex_c)
 
     def remove_super_tri(self):
@@ -359,7 +359,7 @@ class Triangle:
         self.circumcircle_radius = None
 
     def __repr__(self):
-        return  f"Triangle{self.vertex_a}{self.vertex_b}{self.vertex_c}"
+        return  f"Triangle{self.vertex_a.get_coord()}{self.vertex_b.get_coord()}{self.vertex_c.get_coord()}"
 
     def get_vertices(self):
         return (self.vertex_a, self.vertex_b, self.vertex_c)
