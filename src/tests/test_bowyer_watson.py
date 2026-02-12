@@ -1,7 +1,7 @@
 import unittest
 from math import sqrt
 import random
-from itertools import product
+from itertools import product, combinations
 import pygame
 from bowyer_watson import BowyerWatson, Vertex, Edge, Triangle
 import visualizer
@@ -111,24 +111,37 @@ class TestBowyerWatson(unittest.TestCase):
         self.point_of_difficulty = [(0,0),(1,1),(1,0)] #super tri points are created so that
                                         #points such as these will form a triangle with all
                                         #points on a single line (fixed)
-        self.full_house_points = list(product(range(32), range(32)))
-        min_coords = (0, 0)
-        max_coords = (100, 100)
-        n = 10**2
-        self.random_points_float = BowyerWatson(points=self.get_random_points_float(n, min_coords,
-                                                                                   max_coords))
 
     def get_random_points_float(self, n, min_coords, max_coords):
-        return [(random.uniform(min_coords[0],max_coords[0]),
-                 random.uniform(min_coords[1],max_coords[1])) for _ in range(n)]
+        return [(random.uniform(min_coords[0], max_coords[0]),
+                 random.uniform(min_coords[1], max_coords[1])) for _ in range(n)]
+    
+    def get_random_points_int(self, n, min_coords, max_coords):
+        return [(random.randint(min_coords[0], max_coords[0]),
+                 random.randint(min_coords[1], max_coords[1])) for _ in range(n)]
+
+    def point_in_triangle(self, point, triangle):
+        """triangle: tuple of coords"""
+        x, y = point
+        (x1, y1), (x2, y2), (x3, y3) = triangle
+        a = ((y2 - y3)*(x - x3) + (x3 - x2)*(y - y3)) / ((y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3))
+        b = ((y3 - y1)*(x - x3) + (x1 - x3)*(y - y3)) / ((y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3))
+        c = 1 - a - b
+        if 0 <= a <= 1 and 0 <= b <= 1 and 0 <= c <= 1:
+            return True
+        return False
 
     def test_hard_points(self):
         self.bw.add_points(self.hard_points)
         self.bw.triangulate_all()
         # print(self.bw.triangles.values())
 
-    def test_random_points_float(self):
-        self.random_points_float.triangulate_all()
+    def test_random_points_float_runs(self):
+        min_coords = (0, 0)
+        max_coords = (100, 100)
+        n = 10**2
+        self.bw.add_points(self.get_random_points_float(n, min_coords, max_coords))
+        self.bw.triangulate_all()
         # print(self.bw.triangles.values())
 
     def test_super_vert_generation_issue_or_circumcenter_logic(self):
@@ -138,21 +151,54 @@ class TestBowyerWatson(unittest.TestCase):
         # print(self.bw.triangles.values())
 
     def test_full_house(self):
-        self.bw.add_points(self.full_house_points)
+        full_house_points = list(product(range(32), range(32)))
+        self.bw.add_points(full_house_points)
         self.bw.triangulate_all()
+
+    def test_found_and_fixed_case_of_forming_1_tri_out_of_4_points(self):
+        points = sorted(list(((559, 115), (96, 451), (358, 463), (956, 457))))
+        self.bw.add_points(points)
+        self.bw.triangulate_all()
+        self.assertEqual(len(self.bw.triangles), 2)
+
+    def test_random_4_points_generates_2_tris(self):
+        n, i = 4, 10*6
+        for i in range(i):
+            min_coords = (random.randint(0,50), random.randint(0,50))
+            max_coords = (random.randint(70,1200), random.randint(70,1200))
+            points = self.get_random_points_int(n, min_coords, max_coords)
+            self.bw.add_points(points)
+            self.bw.triangulate_all()
+            point_inside = False
+            print("======================")
+            print("points:",points)
+            for a in points:
+                tri = points.copy()
+                tri.remove(a)
+                if self.point_in_triangle(a, tri):
+                    point_inside = True
+                    print(f"point {a} inside {tri}")
+                    print("points:",points)
+            if point_inside:
+                if len(self.bw.triangles) != 3:
+                    print(f"not 3 when point inside on it {i}: minc{min_coords} maxc{max_coords}; points: {points}")
+                    print(f"{len(self.bw.triangles)} triangles: {self.bw.triangles.values()}")
+                self.assertEqual(len(self.bw.triangles), 3)
+            else:
+                if len(self.bw.triangles) != 2:
+                    print(f"not 2 when point outside on it {i}: minc{min_coords} maxc{max_coords}; points: {points}")
+                    print(f"{len(self.bw.triangles)} triangles: {self.bw.triangles.values()}")
+                self.assertEqual(len(self.bw.triangles), 2)
 
 
 class TestVisualization(unittest.TestCase):
     def setUp(self):
-        min_coords = (0, 0)
-        max_coords = (100, 100)
-        surf_size = max_coords[0]*2,max_coords[1]*2
-        n = 10**2
+        self.min_coords = (0, 0)
+        self.max_coords = (100, 100)
+        surf_size = self.max_coords[0]*2,self.max_coords[1]*2
         dump_surface = pygame.Surface(surf_size)
-        points=self.get_random_points_int(n, min_coords, max_coords)
-        # points = [(10,20), (15,22), (25,30)]
         self.visual = visualizer.Visualizer(dump_surface)
-        self.bw = BowyerWatson(points=points, visualizer_queue=self.visual.event_queue)
+        self.bw = BowyerWatson(visualizer_queue=self.visual.event_queue)
 
     def get_random_points_float(self, n, min_coords, max_coords):
         return list(set([(random.uniform(min_coords[0],max_coords[0]),
@@ -163,6 +209,9 @@ class TestVisualization(unittest.TestCase):
                  random.randint(min_coords[1],max_coords[1])) for _ in range(n)]
 
     def test_visualization_triangulation_equality_triangles(self):
+        n = 10**2
+        points=self.get_random_points_int(n, self.min_coords, self.max_coords)
+        self.bw.add_points(points)
         self.bw.triangulate_all()
         self.visual.process_all()
         vis_entities = [ entity.get_bw_key()
@@ -175,4 +224,21 @@ class TestVisualization(unittest.TestCase):
         # print("common objs:", set(bw_result) & set(vis_entities))
         # print("set_vis:", set(vis_entities))
         self.assertEqual(set(bw_result), set(vis_entities))
+    
+    def test_visualization_triangle_count_specific_case(self):
+        points = [(342, 163), (664, 272), (259, 111), (239, 284)]
+        self.bw.add_points(points)
+        self.bw.triangulate_all()
+        self.visual.process_all()
+        vis_entities = [ entity.get_bw_key()
+            for entity in self.visual.entities.values()
+            if entity.__class__ == visualizer.VisualTriangle
+        ]
+        for triangle in self.bw.triangles.values():
+            print(triangle.get_key())
+        bw_result = [obj.get_key() for obj in self.bw.triangles.values()]
+        print("common objs:", set(bw_result) & set(vis_entities))
+        print("set_vis:", set(vis_entities))
+        self.assertEqual(set(bw_result), set(vis_entities))
+
 
