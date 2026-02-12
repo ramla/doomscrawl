@@ -4,7 +4,7 @@ circumcircle_debug = False
 collision_debug = False
 room_debug = False  #print room list to terminal when passing room centers to 
                     #triangulation, among other things
-bw_debug = True
+bw_debug = False
 visualizer_debug = False
 delay_visualisation = True
 random_rooms = True
@@ -26,7 +26,7 @@ color = {
     "col5":     pygame.Color(112,3,83),     # crimson violet
     "col6":     pygame.Color(119,32,20),    # dark wine
     "fill1":    pygame.Color(175,67,25,31), # rusty spice
-    "fill2":    pygame.Color(40,60,70,31),  # 
+    "fill2":    pygame.Color(40,60,70,31),  # neutral fill
     "hilite1":  pygame.Color(89,195,195),   # strong cyan
     "hilite2":  pygame.Color(244,91,105),   # bubblegum pink
     "hilite3":  pygame.Color(237,240,96),   # canary yellow
@@ -40,6 +40,7 @@ color_vertex = color["col5"]
 color_vertex_active = color["hilite2"]
 color_circumcircle = color["col6"]
 color_circumcircle_fill = color["fill2"]
+color_circumcircle_final = color["col3"]
 
 FONTFILE = "assets/WarsawGothic-BnBV.otf"
 
@@ -52,13 +53,17 @@ if delay_visualisation:
 vertex_anim_new_scale = 1.5
 circumcircle_anim_duration = 1/60
 if delay_visualisation:
-    circumcircle_anim_duration = 0.5
+    circumcircle_anim_duration = 3
 circumcircle_anim_drop_scale = 0.95
+
 vertex_radius = thickness/3
 edge_width = thickness/7
 triangle_width = thickness/5
+
 visualisation_delay_min = 0
 if delay_visualisation:
     visualisation_delay_min = 1/60
+
+draw_final_circumcircles = True
 
 player_speed = 20 * thickness

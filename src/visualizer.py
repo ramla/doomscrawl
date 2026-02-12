@@ -302,8 +302,8 @@ class VisualCircumcircle:
         self.color_normal = color
         self.color = pygame.Color(self.color_normal)
         self.color_fill = pygame.Color(config.color_circumcircle_fill)
-        self.radius = triangle.circumcircle_radius
-        self.center = triangle.circumcenter.get_coord()
+        self.radius = triangle.get_circumcircle_radius()
+        self.center = triangle.get_circumcenter().get_coord()
         self.alpha_surface = None
         self.draw_surface()
 

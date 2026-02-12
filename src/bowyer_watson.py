@@ -148,7 +148,6 @@ class BowyerWatson:
                 self.visualize_new(vertex)
 
     def get_super_vertices(self):
-        margin = config.super_tri_margin
         xs, ys = zip(*self.points)
         min_x, min_y, max_x, max_y = min(xs), min(ys), max(xs), max(ys)
         min_any, max_any = min(min_x, min_y), max(max_x, max_y)
@@ -165,6 +164,10 @@ class BowyerWatson:
                     if triangle.get_key() != self.super_tri_key:
                         self.remove_triangle(triangle)
                 self.visualize_remove(super_vertex)
+        if config.draw_final_circumcircles:
+            for triangle in self.triangles.values():
+                triangle.visualize_circle(self.visualizer_queue,
+                                          color=config.color_circumcircle_final)
 
     def add_triangle(self, vertex_a, vertex_b, vertex_c):
         triangle = Triangle(vertex_a, vertex_b, vertex_c, self.edges)
