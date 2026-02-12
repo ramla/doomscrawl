@@ -16,6 +16,7 @@ class Visualizer:
         self.active_edges = []
         self.active_triangles = []
         if config.draw_coords:
+            pygame.freetype.init()
             self.font = pygame.freetype.Font(config.FONTFILE, config.thickness * 1)
 
     def visualize(self, frame_time):
@@ -307,12 +308,11 @@ class VisualCircumcircle:
         self.draw_surface()
 
     def draw_surface(self):
-        self.blit_dest = (self.center[0] - self.radius, self.center[1] - self.radius)
-        self.alpha_surface = pygame.Surface((self.radius*2, self.radius*2), pygame.SRCALPHA)
+        self.alpha_surface = pygame.Surface((config.viewport_x, config.viewport_y), pygame.SRCALPHA)
         pygame.draw.circle(self.alpha_surface, self.color_fill,
-                           (self.radius, self.radius), self.radius, 0)
+                           self.center, self.radius, 0)
         pygame.draw.circle(self.alpha_surface, self.color,
-                           (self.radius, self.radius), self.radius, int(self.width))
+                           self.center, self.radius, int(self.width))
 
     def draw(self, viewport, frame_time):
         if self.accumulator > 0:
@@ -321,7 +321,7 @@ class VisualCircumcircle:
             self.color.a = int(config.circumcircle_anim_drop_scale * self.color.a)
             self.color_fill.a = int(config.circumcircle_anim_drop_scale * self.color_fill.a)
             self.draw_surface()
-        viewport.blit(self.alpha_surface, self.blit_dest)
+        viewport.blit(self.alpha_surface, (0,0))
 
     def anim_drop(self, duration=config.circumcircle_anim_duration):
         self.accumulator = duration
