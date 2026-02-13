@@ -121,13 +121,17 @@ class TestBowyerWatson(unittest.TestCase):
                  random.randint(min_coords[1], max_coords[1])) for _ in range(n)]
 
     def point_in_triangle(self, point, triangle):
-        """triangle: tuple of three coords"""
+        """point in triangle test using barymetric coordinates
+        triangle: tuple of three coords"""
         x, y = point
         (x1, y1), (x2, y2), (x3, y3) = triangle
-        a = ((y2 - y3)*(x - x3) + (x3 - x2)*(y - y3)) / ((y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3))
-        b = ((y3 - y1)*(x - x3) + (x1 - x3)*(y - y3)) / ((y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3))
+        denominator = ((y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3))
+        if denominator == 0:
+            return True
+        a = ((y2 - y3)*(x - x3) + (x3 - x2)*(y - y3)) / denominator
+        b = ((y3 - y1)*(x - x3) + (x1 - x3)*(y - y3)) / denominator
         c = 1 - a - b
-        if 0 < a < 1 and 0 < b < 1 and 0 < c < 1:
+        if 0 <= a <= 1 and 0 <= b <= 1 and 0 <= c <= 1:
             return True
         return False
 

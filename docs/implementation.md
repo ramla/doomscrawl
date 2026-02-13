@@ -34,3 +34,4 @@ Sources used for the project:
 [WikiHow: Find the Perpendicular Bisector of Two Points](https://www.wikihow.com/Find-the-Perpendicular-Bisector-of-Two-Points)
 [WikiHow: Methods to Find and Solve Circumcenter](https://www.wikihow.com/Find-Circumcenter)
 [Efficient Algorithm for Intersection of Two Lines: Comparing Determinants vs. Normal Algebra (No Matrices Needed)](https://www.tutorialpedia.org/blog/algorithm-for-intersection-of-2-lines/#5-practical-examples)
+[Accurate point in triangle test](https://totologic.blogspot.com/2014/01/accurate-point-in-triangle-test.html)
