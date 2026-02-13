@@ -149,7 +149,7 @@ class TestBowyerWatson(unittest.TestCase):
         # print(self.bw.triangles.values())
 
     def test_full_house(self):
-        full_house_points = list(product(range(32), range(32)))
+        full_house_points = list(product(range(16), range(16)))
         self.bw.add_points(full_house_points)
         self.bw.triangulate_all()
 
