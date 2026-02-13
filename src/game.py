@@ -90,6 +90,8 @@ class Doomcrawl:
                 if event.key == pygame.K_F1 or \
                    event.key == pygame.K_h:
                     self.helping = True
+            if event.type == config.POINT_REJECTED:
+                self.dungeon.handle_point_rejection(event.room_center)
 
     def process_key_input(self):
         keys = pygame.key.get_pressed()

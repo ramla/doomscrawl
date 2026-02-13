@@ -73,6 +73,11 @@ class Dungeon:
             print("room list:",list(zip(centers, sizes)))
         return centers
 
+    def handle_point_rejection(self, point):
+        for room in self.rooms:
+            if room.center == point:
+                self.rooms.remove(room)
+                break
 
 class Room(pygame.Rect):
     def __init__(self, size=None, pos=None, center=None):

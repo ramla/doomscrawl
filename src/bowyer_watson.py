@@ -1,4 +1,4 @@
-from math import sqrt
+from math import sqrt, isclose
 from operator import methodcaller
 from collections import deque
 import config
@@ -35,13 +35,18 @@ class BowyerWatson:
             Edge or Triangle object and possibly additional parameters. See also visualizer.py
 
             points: a list of tuples of x,y coordinates
+
         """
         self.visualizer_queue = visualizer_queue
         self.points = []
+        self.rejected_points = []
         self.next_points = deque()
+        self.point_tries = {}
         self.super_verts = None
         self.super_tri_key = None
         self.edges = {}
+        self.bounding_edges = set()
+        self.final_edges = set()
         self.triangles = {}
         self.triangles_with_edge = {}
         self.ready = True
@@ -68,13 +73,29 @@ class BowyerWatson:
         Parameters:
             point: tuple of x,y coordinates expected to lie within the boudaries
         """
+        if point not in self.point_tries:
+            self.point_tries[point] = 0
+        elif self.point_tries[point] > len(self.rejected_points) + 1:
+            self.reject_point(point)
+            return
         new_vertex = Vertex(point[0],point[1])
         if config.bw_debug:
             print("triangulating", new_vertex)
         bad_triangles = set()
         self.visualize_new(new_vertex, active=True, reset_active=True)
         for triangle in self.triangles.values():
-            new_vertex_in_circumcircle = triangle.vertex_in_circumcircle(new_vertex)
+            try:
+                new_vertex_in_circumcircle = triangle.vertex_in_circumcircle(new_vertex)
+            except ValueError:
+                # point is within error margin of a circumcircle, push it to the back of the deque
+                # to try triangulate it later
+
+                self.next_points.append(point)
+                self.point_tries[point] += 1
+                if config.problematic_point_debug:
+                    print(f"{point}: Potentially problematic point location, pushing to back of" \
+                          f" deque. Tries: {self.point_tries[point]}")
+                return
             if not new_vertex_in_circumcircle:
                 color = config.color["col4"]
                 if config.circumcircle_debug:
@@ -120,14 +141,15 @@ class BowyerWatson:
             self.triangulate_point(point)
             break
         if not self.next_points:
-            self.remove_super_tri()
+            self.finalize_triangulation()
             self.ready = True
 
     def triangulate_all(self):
         while self.next_points:
             point = self.next_points.popleft()
             self.triangulate_point(point)
-        self.remove_super_tri()
+        self.finalize_triangulation()
+        self.ready = True
 
     def create_super_tri(self):
         if self.points:
@@ -156,14 +178,38 @@ class BowyerWatson:
         vertex_c = Vertex(max_any * 20, min_any - max_any * 10)
         return (vertex_a, vertex_b, vertex_c)
 
+    def finalize_triangulation(self):
+        self.remove_super_tri()
+        if self.visualizer_queue:
+            self.draw_final_circumcircles()
+            for triangle in self.triangles:
+                self.visualize_remove(triangle)
+        self.find_final_edges()
+
     def remove_super_tri(self):
         for triangle in list(self.triangles.values()):
             for super_vertex in self.super_verts:
                 self.visualize_activate(super_vertex, reset_active=True)
                 if super_vertex in triangle.get_vertices():
+                    for edge in triangle.get_edges():
+                        if not edge.get_vertices()[0] in self.super_verts and \
+                           not edge.get_vertices()[1] in self.super_verts:
+                            if edge in self.bounding_edges:
+                                # Removing the super-connected triangles we seem to be removing
+                                # both edges from between two triangulated points. For our purposes
+                                # it's probably best to keep it.
+                                self.final_edges.add(edge)
+                            self.bounding_edges.add(edge)
                     if triangle.get_key() != self.super_tri_key:
                         self.remove_triangle(triangle)
                 self.visualize_remove(super_vertex)
+
+    def find_final_edges(self):
+        for triangle in self.triangles.values():
+            for edge in triangle.get_edges():
+                self.final_edges.add(edge)
+
+    def draw_final_circumcircles(self):
         if config.draw_final_circumcircles:
             for triangle in self.triangles.values():
                 triangle.visualize_circle(self.visualizer_queue,
@@ -212,7 +258,7 @@ class BowyerWatson:
                 self.visualizer_queue.put(methodcaller("remove_triangle", bw_object))
 
     def visualize_new(self, bw_object, active=False, reset_active=False):
-        if self.visualizer_queue: 
+        if self.visualizer_queue:
             if isinstance(bw_object, Vertex):
                 self.visualizer_queue.put(methodcaller("new_vertex",
                                                        bw_object, active, reset_active))
@@ -248,10 +294,17 @@ class BowyerWatson:
             return False
         return True
 
-    def grow_super_triangle(self):
-        new_vertices = self.get_super_vertices()
-        for i in range(3):
-            self.super_verts[i].x, self.super_verts[i].y = new_vertices[i].x, new_vertices[i].y
+    def reject_point(self, point):
+        print(f"REJECTED {point}")
+        self.rejected_points.append(point)
+        triangles_to_delete = set()
+        for triangle in self.triangles.values():
+            if point in triangle.get_coords():
+                triangles_to_delete.add(triangle)
+        for triangle in triangles_to_delete:
+            self.remove_triangle(triangle)
+        self.visualize_remove(Vertex(point[0], point[1]))
+
 
 class Vertex:
     def __init__(self, x, y):
@@ -279,13 +332,14 @@ class Vertex:
         return (self.x, self.y)
 
     def distance_from(self, vertex):
-        return sqrt((self.x - vertex.x)**2 + (self.y - vertex.y)**2)
+        return sqrt(self.distance_from_squared(vertex))
 
+    def distance_from_squared(self, vertex):
+        return (self.x - vertex.x)**2 + (self.y - vertex.y)**2
 
 class Edge:
     def __init__(self, vertex_a:Vertex, vertex_b:Vertex):
-        self.vertex_a = vertex_a
-        self.vertex_b = vertex_b
+        self.vertex_a, self.vertex_b = sorted((vertex_a, vertex_b))
         self.midpoint = None
         self.slope = None
         self.pb_slope = None
@@ -296,11 +350,16 @@ class Edge:
         return f"Edge{self.get_key()}"
 
     def __eq__(self, edge:"Edge"):
-        return (self.vertex_a == edge.vertex_a and self.vertex_b == edge.vertex_b) \
-            or (self.vertex_a == edge.vertex_b and self.vertex_b == edge.vertex_a)
+        return (self.vertex_a == edge.vertex_a and self.vertex_b == edge.vertex_b)
+
+    def __hash__(self):
+        return hash(self.get_key())
 
     def get_key(self):
-        return tuple(sorted((self.vertex_a, self.vertex_b)))
+        return self.get_coords()
+
+    def get_coords(self):
+        return (self.vertex_a.get_coord(), self.vertex_b.get_coord())
 
     def get_vertices(self):
         return (self.vertex_a, self.vertex_b)
@@ -360,26 +419,40 @@ class Triangle:
         self.edge_lookup = edge_lookup
         self.circumcenter = None
         self.circumcircle_radius = None
+        self.circumcircle_radius_squared = None
 
     def __repr__(self):
-        return  f"Triangle{self.vertex_a.get_coord()}{self.vertex_b.get_coord()}{self.vertex_c.get_coord()}"
+        return  f"Triangle{self.vertex_a.get_coord()}" \
+                        f"{self.vertex_b.get_coord()}" \
+                        f"{self.vertex_c.get_coord()}"
 
     def get_vertices(self):
         return (self.vertex_a, self.vertex_b, self.vertex_c)
+
+    def get_coords(self):
+        return [vertex.get_coord() for vertex in self.get_vertices()]
 
     def get_key(self):
         return tuple(sorted((self.vertex_a, self.vertex_b, self.vertex_c)))
 
     def get_edges(self):
-        return (self.edge_lookup[tuple(sorted((self.vertex_a, self.vertex_b)))],
-                self.edge_lookup[tuple(sorted((self.vertex_a, self.vertex_c)))],
-                self.edge_lookup[tuple(sorted((self.vertex_b, self.vertex_c)))]
+        return (self.edge_lookup[tuple(sorted((self.vertex_a.get_coord(),
+                                               self.vertex_b.get_coord())))],
+                self.edge_lookup[tuple(sorted((self.vertex_a.get_coord(),
+                                               self.vertex_c.get_coord())))],
+                self.edge_lookup[tuple(sorted((self.vertex_b.get_coord(),
+                                               self.vertex_c.get_coord())))]
             )
+
+    def get_circumcircle_radius_squared(self):
+        if not self.circumcircle_radius_squared:
+            a, b, c = [edge.get_length() for edge in self.get_edges()]
+            self.circumcircle_radius_squared = (a*b*c)**2 / ((a+b+c)*(b+c-a)*(c+a-b)*(a+b-c))
+        return self.circumcircle_radius_squared
 
     def get_circumcircle_radius(self):
         if not self.circumcircle_radius:
-            a, b, c = [edge.get_length() for edge in self.get_edges()]
-            self.circumcircle_radius = a*b*c / sqrt((a+b+c)*(b+c-a)*(c+a-b)*(a+b-c))
+            self.circumcircle_radius = sqrt(self.get_circumcircle_radius_squared())
         return self.circumcircle_radius
 
     def get_circumcenter(self):
@@ -418,7 +491,13 @@ class Triangle:
         return self.circumcenter
 
     def vertex_in_circumcircle(self, vertex):
-        return self.get_circumcenter().distance_from(vertex) <= self.get_circumcircle_radius()
+        dist = self.get_circumcenter().distance_from_squared(vertex)
+        r = self.get_circumcircle_radius_squared()
+        if isclose(dist, r):
+            raise ValueError("Potentially problematic point location")
+        elif dist <= r:
+            return True
+        return False
 
     def select_edges_for_circumcenter_f(self):
         """Edges with perpendicular bisectors on lines of form y = 0x + c will be omitted"""

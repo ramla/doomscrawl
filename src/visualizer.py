@@ -6,7 +6,7 @@ import config
 
 
 class Visualizer:
-    def __init__(self, viewport):
+    def __init__(self, viewport, testing=False):
         self.event_queue = queue.Queue()
         self.viewport = viewport
         self.accumulator = 0
@@ -15,6 +15,7 @@ class Visualizer:
         self.active_vertices = []
         self.active_edges = []
         self.active_triangles = []
+        self.testing = testing
         if config.draw_coords:
             pygame.freetype.init()
             self.font = pygame.freetype.Font(config.FONTFILE, config.thickness * 1)
@@ -101,6 +102,9 @@ class Visualizer:
         self.entities[circle.get_key()] = circle
 
     def remove_vertex(self, vertex):
+        if not self.testing:
+            event = pygame.event.Event(config.POINT_REJECTED, {"room_center": vertex.get_coord()})
+            pygame.event.post(event)
         if config.visualizer_debug:
             print("removing vertex", vertex)
         try:

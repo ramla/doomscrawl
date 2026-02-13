@@ -1,10 +1,13 @@
 import pygame
 
+POINT_REJECTED = pygame.USEREVENT + 1
+
 circumcircle_debug = False
 collision_debug = False
 room_debug = False  #print room list to terminal when passing room centers to 
                     #triangulation, among other things
 bw_debug = False
+problematic_point_debug = False
 visualizer_debug = False
 delay_visualisation = True
 random_rooms = True
