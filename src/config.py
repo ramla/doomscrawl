@@ -70,3 +70,14 @@ if delay_visualisation:
 draw_final_circumcircles = True
 
 player_speed = 20 * thickness
+
+helptext_test = "Q, Esc        Next exception\n" \
+                "Space         End visual checks\n"
+helptext      = "Esc, Q        Quit\n" \
+                "WASD        Move\n" \
+                "      R          Randomise another room\n" \
+                "      T          Initialise triangulation\n" \
+                "      F          Triangulate all\n" \
+                "      E          Triangulate one point\n" \
+                "    F1 or H to display this again\n" \
+                "        any key to continue"

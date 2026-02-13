@@ -10,11 +10,17 @@ from visualizer import Visualizer
 
 
 class Doomcrawl:
-    def __init__(self, rooms=None):
+    def __init__(self, rooms=None, add_title=None, exceptions=False):
         pygame.init()
         self.viewport = pygame.display.set_mode((config.viewport_x,config.viewport_y),
                                                 pygame.RESIZABLE)
-        pygame.display.set_caption('Doomscrawl')
+        title = "Doomscrawl"
+        if add_title is not None:
+            title = "Doomscrawl - " + add_title
+        self.visually_confirm_test_exceptions = False
+        if exceptions:
+            self.visually_confirm_test_exceptions = True
+        pygame.display.set_caption(title)
         pygame.freetype.init()
         self.font = pygame.freetype.Font(config.FONTFILE, config.thickness * 3)
         self.help_surface = self.create_help_surface()
@@ -31,6 +37,10 @@ class Doomcrawl:
         self.helping = True
 
     def start(self):
+        if self.visually_confirm_test_exceptions:
+            config.delay_visualisation = False
+            self.bw.add_points(self.dungeon.get_room_centers())
+            self.bw.triangulate_all()
         self.loop(config.target_fps)
         sys.exit()
 
@@ -126,18 +136,14 @@ class Doomcrawl:
 
         if keys[pygame.K_q] or keys[pygame.K_ESCAPE]:
             self.running = False
+        if keys[pygame.K_SPACE]:
+            raise SystemExit(1)
 
     def create_help_surface(self):
         help_surface = pygame.Surface((config.viewport_x, config.viewport_y), pygame.SRCALPHA)
-        text =  "Esc, Q        Quit\n" \
-                "WASD        Move\n" \
-                "      R          Randomise another room\n" \
-                "      T          Initialise triangulation\n" \
-                "      F          Triangulate all\n" \
-                "      E          Triangulate one point\n" \
-                "    F1 or H to display this again\n" \
-                "        any key to continue"
-
+        text = config.helptext
+        if self.visually_confirm_test_exceptions:
+            text = config.helptext_test
         line_height = self.font.get_sized_height()
         x, y = config.thickness * 4, config.thickness * 3
         for line in text.splitlines():

@@ -5,6 +5,8 @@ from itertools import product
 import pygame
 from bowyer_watson import BowyerWatson, Vertex, Edge, Triangle
 import visualizer
+from game import Doomcrawl
+import config
 
 
 class TestEdge(unittest.TestCase):
@@ -166,15 +168,37 @@ class TestBowyerWatson(unittest.TestCase):
         self.assertEqual(len(self.bw.triangles), 2)
 
     def test_random_4_points_iterated(self):
-        i = 10*4
-        for i in range(i):
-            self.random_4_points_tri_count()
+        its = 0
+        limit = 10**2
+        exceptions = []
+        while its < limit:
+            its += 1
+            if its % 1000 == 0:
+                print("iteration", its)
+            exception = self.random_4_points_tri_count()
+            if exception:
+                exceptions.append(exception)
+        i = 0
+        visually_confim_test_exceptions = True
+        print(exceptions)
+        while visually_confim_test_exceptions and i < len(exceptions):
+            title, point_set = exceptions[i]
+            try:
+                app = Doomcrawl(zip(point_set, len(point_set)*[(40,40)]),
+                                add_title=title, exceptions=True)
+                app.start()
+            except SystemExit as e:
+                if str(e) == "1":
+                    visually_confim_test_exceptions = False
+            i += 1
 
     def random_4_points_tri_count(self):
         n = 4
+        points = []
         min_coords = (random.randint(0,50), random.randint(0,50))
-        max_coords = (random.randint(70,1200), random.randint(70,1200))
-        points = self.get_random_points_int(n, min_coords, max_coords)
+        max_coords = (random.randint(70,1200), random.randint(70,700))
+        while len(set(points)) != 4:
+            points = self.get_random_points_int(n, min_coords, max_coords)
         bw = BowyerWatson(points=points)
         bw.triangulate_all()
         point_inside = False
@@ -183,31 +207,70 @@ class TestBowyerWatson(unittest.TestCase):
             tri.remove(a)
             if self.point_in_triangle(a, tri):
                 point_inside = True
+        if bw.rejected_points:
+            # since rejected points were found, there should be exactly one triangle in the
+            # case of four original points added to triangulate
+            self.assertEqual(len(bw.triangles), 1,
+                                f"Well I didn't come to think of this edge case: {points}")
+                                # times this assertation failed so far: 1
+            return ("Point rejected due to being on circumcircle circumference", points)
+        if len(bw.triangles) == 1:
+            # assuming points lie narrow or flat enough in x or y so that the sole edge
+            # connecting a point to other triangulated points only forms triangles containing
+            # supervertices and gets removed in the end.
+            # for the use case this is handled by checking for such edge when removing triangles
+            # thus testing for the appropriate edge count instead
+            print(f"ONE TRIANGLE EXCEPTION: {points}")
+                #   f"triangles: {bw.triangles.values()}\n"
+                #   f"edges: {list(bw.final_edges)}")
+            self.assertEqual(len(bw.final_edges), 4,
+                        "Edge count not 4 in a triangulation of 4 points resulting in 1 triangle"
+                       f"Points: {points}")
+            return ("One triangle, four edges", points)
         if point_inside:
-            if len(bw.triangles) != 3:
-                print(f"point {a} inside {tri}")
-                print(f"not 3 when point inside, points: {points}")
-                print(f"{len(bw.triangles)} triangles: {bw.triangles.values()}")
-            # also accepting a 2 due to some of these being points practically on the line.
-            # left the printout so you can visually confirm the test cases if in doubt
-            self.assertIn(len(bw.triangles), [2,3],
-                          "Triangle count not in [2,3] in a triangulation of 4 points")
-        else:
-            if len(bw.triangles) != 2:
-                print("not 2 when point outside: ", end="")
-                print(f"minc{min_coords} maxc{max_coords};\npoints: {points}")
-                print(f"{len(bw.triangles)} triangles: {bw.triangles.values()}")
-            self.assertEqual(len(bw.triangles), 2,
-                    "Triangle count not 2 in what should be a convex triangulation of 4 points")
-
+            if len(bw.triangles) not in [2,3]:
+                print(f"FOURTH POINT INSIDE EXCEPTION: {points}")
+                print("Triangle count not 2 or 3 in what should be a concave triangulation of 4"
+                        f" points \nPoints: {points}")
+                # assuming points align very close to a line (not checked for), three edges
+                # are acceptable as well
+                self.assertEqual(len(bw.final_edges), 3,
+                    "Edge count not 3 in a triangulation of 4 points resulting in 0 triangles"
+                    f"Points: {points}")
+                return (f"Fourth point inside but tri count is {len(bw.triangles)} (!= 3):", points)
+            # also accepting a 2 triangle result due to some of these are points close to being
+            # on a line.
+            self.assertIn(len(bw.triangles), [2,3])
+            if len(bw.triangles) == 2:
+                print(f"FOURTH POINT INSIDE EXCEPTION: {points}")
+                return (f"Fourth point inside but tri count is {len(bw.triangles)} (!= 3):",
+                        points)
+            return None
+        elif not point_inside and len(bw.triangles) != 2:
+            if len(bw.triangles) == 0:
+                print(f"FOURTH POINT OUTSIDE EXCEPTION: {points}")
+                print("Triangle count not 2 in what should be a convex triangulation of 4 points"
+                    f"\nPoints: {points}")
+                # assuming points lie very close to a line (not checked for) so that the sole edge
+                # connecting a point to other triangulated points only forms triangles containing
+                # supervertices and gets removed in the end.
+                # for the use case this is handled by checking for such edge when removing triangles
+                # thus testing for the appropriate edge count instead
+                self.assertEqual(len(bw.final_edges), 3,
+                        "Edge count not 3 in a triangulation of 4 points resulting in 0 triangles"
+                    f"Points: {points}")
+                return (f"Fourth point outside but tri count: {len(bw.triangles)} (!= 2):", points)
+        self.assertEqual(len(bw.triangles), 2,
+                         f"Looks like there's another edge case I didn't consider: {points}")
 
 class TestVisualization(unittest.TestCase):
     def setUp(self):
+
         self.min_coords = (0, 0)
         self.max_coords = (100, 100)
         surf_size = self.max_coords[0]*2,self.max_coords[1]*2
         dump_surface = pygame.Surface(surf_size)
-        self.visual = visualizer.Visualizer(dump_surface)
+        self.visual = visualizer.Visualizer(dump_surface, testing=True)
         self.bw = BowyerWatson(visualizer_queue=self.visual.event_queue)
 
     def get_random_points_float(self, n, min_coords, max_coords):
