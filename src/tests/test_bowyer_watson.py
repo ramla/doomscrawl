@@ -6,7 +6,7 @@ import pygame
 from bowyer_watson import BowyerWatson, Vertex, Edge, Triangle
 import visualizer
 from game import Doomcrawl
-import config
+from utility import get_random_points_int, get_random_points_float
 
 
 class TestEdge(unittest.TestCase):
@@ -114,14 +114,6 @@ class TestBowyerWatson(unittest.TestCase):
                                         #points such as these will form a triangle with all
                                         #points on a single line (fixed)
 
-    def get_random_points_float(self, n, min_coords, max_coords):
-        return [(random.uniform(min_coords[0], max_coords[0]),
-                 random.uniform(min_coords[1], max_coords[1])) for _ in range(n)]
-
-    def get_random_points_int(self, n, min_coords, max_coords):
-        return [(random.randint(min_coords[0], max_coords[0]),
-                 random.randint(min_coords[1], max_coords[1])) for _ in range(n)]
-
     def point_in_triangle(self, point, triangle):
         """point in triangle test using barymetric coordinates
         triangle: tuple of three coords"""
@@ -146,7 +138,7 @@ class TestBowyerWatson(unittest.TestCase):
         min_coords = (0, 0)
         max_coords = (100, 100)
         n = 10**2
-        self.bw.add_points(self.get_random_points_float(n, min_coords, max_coords))
+        self.bw.add_points(get_random_points_float(n, min_coords, max_coords))
         self.bw.triangulate_all()
         # print(self.bw.triangles.values())
 
@@ -198,7 +190,7 @@ class TestBowyerWatson(unittest.TestCase):
         min_coords = (random.randint(0,50), random.randint(0,50))
         max_coords = (random.randint(70,1200), random.randint(70,700))
         while len(set(points)) != 4:
-            points = self.get_random_points_int(n, min_coords, max_coords)
+            points = get_random_points_int(n, min_coords, max_coords)
         bw = BowyerWatson(points=points)
         bw.triangulate_all()
         point_inside = False
@@ -273,17 +265,9 @@ class TestVisualization(unittest.TestCase):
         self.visual = visualizer.Visualizer(dump_surface, testing=True)
         self.bw = BowyerWatson(visualizer_queue=self.visual.event_queue)
 
-    def get_random_points_float(self, n, min_coords, max_coords):
-        return list(set([(random.uniform(min_coords[0],max_coords[0]),
-                 random.uniform(min_coords[1],max_coords[1])) for _ in range(n)]))
-
-    def get_random_points_int(self, n, min_coords, max_coords):
-        return [(random.randint(min_coords[0],max_coords[0]),
-                 random.randint(min_coords[1],max_coords[1])) for _ in range(n)]
-
     def test_visualization_triangulation_equality_triangles(self):
         n = 10**2
-        points=self.get_random_points_int(n, self.min_coords, self.max_coords)
+        points=get_random_points_int(n, self.min_coords, self.max_coords)
         self.bw.add_points(points)
         self.bw.triangulate_all()
         self.visual.process_all()
