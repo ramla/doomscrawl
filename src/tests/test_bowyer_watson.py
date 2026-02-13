@@ -60,8 +60,8 @@ class TestEdge(unittest.TestCase):
 
     def test_edge_get_key(self):
         alt_e1 = Edge(self.v2, self.v1)
-        self.assertEqual(tuple(sorted((self.v1, self.v2))), self.e1.get_key())
-        self.assertEqual(tuple(sorted((self.v1, self.v2))), alt_e1.get_key())
+        self.assertEqual(tuple(sorted((self.v1.get_coord(), self.v2.get_coord()))), self.e1.get_key())
+        self.assertEqual(tuple(sorted((self.v1.get_coord(), self.v2.get_coord()))), alt_e1.get_key())
 
 
 class TestTriangle(unittest.TestCase):
