@@ -8,24 +8,37 @@ class BowyerWatson:
     point at a time to run visualisation in between to see the algorithm at work.
 
     Attributes:
-        points: All points passed to the triangulation class
-
         next_points: A deque of new tuples of x,y coordinates to triangulate
 
-        super_verts: Tuple containing boundary vertices
+        rejected_points: list of points rejected due to being too close to hitting a
+        circumference of an existing triangle's circumcircle
 
-        super_tri_key:
+        next_points: a deque of points to be triangulated
+
+        point_tries: dict to keep track of how many times a point has been tried to triangulate
+        but failed to not hit the circumcircle of an existing triangle
+
+        super_verts = tuple containing supertriangle's points as Vertex
+
+        super_tri_key: key with which supertriangle is saved in triangles-dictionary
 
         edges: Dictionray containing Edge objects relevant to triangulation
 
-        triangles: Dictionary containing Triangle objects relevant to triangulation
+        bounding_edges: set of edges not containing supervertices, collected when removing
+        super connected triangles in the finalising step
+
+        final_edges: the edges connecting the triangulation - with the possible addition of
+        some edges that were a point's only connection to the rest of the triangulation, found
+        in very flat or narrow sets of points
+
+        triangles: key: Triangle.get_key(), value: Triangle. Dictionary containing the
+        triangulation. If self.ready, is empty or contains the final triangulation without super
+        connected triangles
 
         triangles_with_edge: Dictionary containing count of Triangles in self.triangles that share
             the Edge in key
 
-        intialised: Bool for whether the boundary has been set and points added to next_points
-
-        ready: Bool for readiness to receive next set of points
+        ready: when False, triangulation is ongoing
     """
 
     def __init__(self, visualizer_queue=None, points=None):
