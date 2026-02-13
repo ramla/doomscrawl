@@ -58,7 +58,7 @@ class Dungeon:
 
     def overlapping_existing(self, mask, offset):
         """Check if [new room's] mask overlaps existing ones, but only if randomising rooms"""
-        if config.random_rooms and self.collision_mask.overlap(mask, offset):
+        if self.collision_mask.overlap(mask, offset):
             return True
         return False
 

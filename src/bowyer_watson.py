@@ -57,6 +57,7 @@ class BowyerWatson:
         self.point_tries = {}
         self.super_verts = None
         self.super_tri_key = None
+        self.super_storage = []
         self.edges = {}
         self.bounding_edges = set()
         self.final_edges = set()
@@ -73,8 +74,9 @@ class BowyerWatson:
             points: a list of tuples of x and y coordinates
         """
         if points and self.ready:
-            self.next_points.extend(points)
-            self.points = list(set(self.points + points))
+            new_points = list(set(points) - set(self.points))
+            self.next_points.extend(new_points)
+            self.points += new_points
             self.create_super_tri()
             self.ready = False
 
@@ -165,22 +167,17 @@ class BowyerWatson:
         self.ready = True
 
     def create_super_tri(self):
-        if self.points:
-            if self.super_verts is None:
-                self.super_verts = self.get_super_vertices()
-                super_edges = ( Edge(self.super_verts[0], self.super_verts[1]),
-                                Edge(self.super_verts[1], self.super_verts[2]),
-                                Edge(self.super_verts[0], self.super_verts[2])
-                            )
-                for edge in super_edges:
-                    self.edges[edge.get_key()] = edge
-                self.super_tri_key = self.add_triangle(*self.super_verts)
-            else:
-                self.grow_super_triangle()
-                self.visualize_new(self.triangles[self.super_tri_key])
-        if self.visualizer_queue:
-            for vertex in self.super_verts:
-                self.visualize_new(vertex)
+        if self.super_verts is None:
+            self.super_verts = self.get_super_vertices()
+            super_edges = ( Edge(self.super_verts[0], self.super_verts[1]),
+                            Edge(self.super_verts[1], self.super_verts[2]),
+                            Edge(self.super_verts[0], self.super_verts[2])
+                        )
+            for edge in super_edges:
+                self.edges[edge.get_key()] = edge
+            self.super_tri_key = self.add_triangle(*self.super_verts)
+        else:
+            self.restore_super_triangle()
 
     def get_super_vertices(self):
         xs, ys = zip(*self.points)
@@ -202,20 +199,25 @@ class BowyerWatson:
     def remove_super_tri(self):
         for triangle in list(self.triangles.values()):
             for super_vertex in self.super_verts:
-                self.visualize_activate(super_vertex, reset_active=True)
                 if super_vertex in triangle.get_vertices():
                     for edge in triangle.get_edges():
                         if not edge.get_vertices()[0] in self.super_verts and \
                            not edge.get_vertices()[1] in self.super_verts:
                             if edge in self.bounding_edges:
-                                # Removing the super-connected triangles we seem to be removing
-                                # both edges from between two triangulated points. For our purposes
-                                # it's probably best to keep it.
+                                # While removing the super-connected triangles we seem to be
+                                # removing both edges from between two triangulated points.
+                                # For our purposes it's probably best to keep it.
                                 self.final_edges.add(edge)
                             self.bounding_edges.add(edge)
-                    if triangle.get_key() != self.super_tri_key:
-                        self.remove_triangle(triangle)
-                self.visualize_remove(super_vertex)
+                    self.super_storage.append(triangle)
+                    self.remove_triangle(triangle)
+
+    def restore_super_triangle(self):
+        print(self.super_storage)
+        for triangle in self.super_storage:
+            self.triangles[triangle.get_key()] = triangle
+            self.visualize_new(triangle)
+        self.super_storage = []
 
     def find_final_edges(self):
         for triangle in self.triangles.values():
@@ -237,7 +239,8 @@ class BowyerWatson:
                 )
         for edge in edges:
             key = edge.get_key()
-            self.edges[key] = edge
+            if key not in self.edges:
+                self.edges[key] = edge
             if key not in self.triangles_with_edge:
                 self.triangles_with_edge[key] = 0
             self.triangles_with_edge[key] += 1
