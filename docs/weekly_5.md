@@ -7,3 +7,5 @@ Visualisation improved somewhat as well. For the actual game one can now firts t
 A good amount of time was also spent code reviewing peer project. What was there turned out to be terse but decently executed and I found less to comment on it than I expected.
 
 Next week's todo list includes the apparently expected Prim's and A-star in addition to the corridor creation itself. Focus will be on functionality instead of tests and docs since there still seems to be much to do for the demo.
+
+33.5h this week
