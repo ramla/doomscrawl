@@ -35,8 +35,10 @@ class BowyerWatson:
         triangulation. If self.ready, is empty or contains the final triangulation without super
         connected triangles
 
-        triangles_with_edge: Dictionary containing count of Triangles in self.triangles that share
-            the Edge in key
+        triangles_with_edge: Dictionary containing keys of Triangles in self.triangles that share
+            the Edge
+            key: edge key
+            value: list of triangle keys
 
         ready: when False, triangulation is ongoing
     """
@@ -242,8 +244,9 @@ class BowyerWatson:
             if key not in self.edges:
                 self.edges[key] = edge
             if key not in self.triangles_with_edge:
-                self.triangles_with_edge[key] = 0
-            self.triangles_with_edge[key] += 1
+                self.triangles_with_edge[key] = []
+            self.triangles_with_edge[key].append(triangle.get_key())
+
         self.visualize_new(triangle)
         return triangle.get_key()
 
@@ -255,8 +258,8 @@ class BowyerWatson:
         for edge in edges:
             key = edge.get_key()
             self.edges[key] = edge
-            self.triangles_with_edge[key] -= 1
-            if self.triangles_with_edge[key] == 0:
+            self.triangles_with_edge[key].remove(triangle.get_key())
+            if self.triangles_with_edge[key] == []:
                 try:
                     self.visualize_remove(edge)
                 except KeyError:
