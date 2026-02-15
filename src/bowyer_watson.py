@@ -15,6 +15,9 @@ class BowyerWatson:
 
         next_points: a deque of points to be triangulated
 
+        point_pushed_back: when a point has been found too close to a circle's perimeter this bool
+        is used to cancel the existing recursion stack
+
         point_tries: dict to keep track of how many times a point has been tried to triangulate
         but failed to not hit the circumcircle of an existing triangle
 
@@ -38,7 +41,7 @@ class BowyerWatson:
         triangles_with_edge: Dictionary containing keys of Triangles in self.triangles that share
             the Edge
             key: edge key
-            value: list of triangle keys
+            value: triangle object
 
         ready: when False, triangulation is ongoing
     """
@@ -56,6 +59,7 @@ class BowyerWatson:
         self.points = []
         self.rejected_points = []
         self.next_points = deque()
+        self.point_pushed_back = False
         self.point_tries = {}
         self.super_verts = None
         self.super_tri_key = None
@@ -90,6 +94,7 @@ class BowyerWatson:
         Parameters:
             point: tuple of x,y coordinates expected to lie within the boudaries
         """
+        self.point_pushed_back = False
         if point not in self.point_tries:
             self.point_tries[point] = 0
         elif self.point_tries[point] > len(self.rejected_points) + 1:
@@ -104,14 +109,7 @@ class BowyerWatson:
             try:
                 new_vertex_in_circumcircle = triangle.vertex_in_circumcircle(new_vertex)
             except ValueError:
-                # point is within error margin of a circumcircle, push it to the back of the deque
-                # to try triangulate it later
-
-                self.next_points.append(point)
-                self.point_tries[point] += 1
-                if config.problematic_point_debug:
-                    print(f"{point}: Potentially problematic point location, pushing to back of" \
-                          f" deque. Tries: {self.point_tries[point]}")
+                self.handle_vertex_in_circumcircle_value_error(new_vertex.get_coord())
                 return
             if not new_vertex_in_circumcircle:
                 color = config.color["col4"]
@@ -123,15 +121,8 @@ class BowyerWatson:
                     print(new_vertex,"is in CC of",triangle)
             triangle.visualize_circle(self.visualizer_queue, color=color)
             if new_vertex_in_circumcircle:
-                for vertex in triangle.get_vertices():
-                    self.visualize_activate(vertex)
-                bad_triangles.add(triangle)
-                for edge in triangle.get_edges():
-                    if not edge.get_key() in self.edges:
-                        self.edges[edge.get_key()] = edge
-                    self.visualize_new(edge, active=True, reset_active=True)
-                    self.visualize_activate(triangle)
-            triangle.visualize_remove_circle(self.visualizer_queue)
+                self.handle_found_triangle(triangle, bad_triangles, new_vertex)
+                break
         bad_tri_edgecount = {}
         for triangle in bad_triangles:
             for edge in triangle.get_edges():
@@ -151,6 +142,41 @@ class BowyerWatson:
                 print("validating triangle: new vert with edge:",edge)
             if self.is_valid_triangle(vertex_a, vertex_b, new_vertex):
                 self.add_triangle(vertex_a, vertex_b, new_vertex)
+
+    def handle_found_triangle(self, triangle, bad_triangles, new_vertex):
+        if self.point_pushed_back:
+            triangle.visualize_remove_circle(self.visualizer_queue)
+            return
+        for vertex in triangle.get_vertices():
+            self.visualize_activate(vertex)
+        bad_triangles.add(triangle)
+        for edge in triangle.get_edges():
+            if not edge.get_key() in self.edges:
+                self.edges[edge.get_key()] = edge
+            self.visualize_new(edge, active=True, reset_active=True)
+            self.visualize_activate(triangle)
+        triangle.visualize_remove_circle(self.visualizer_queue)
+        for edge in triangle.get_edges():
+            for triangle_by_edge in self.triangles_with_edge[edge.get_key()]:
+                try:
+                    new_vertex_in_circumcircle = triangle_by_edge.vertex_in_circumcircle(new_vertex)
+                except ValueError:
+                    self.handle_vertex_in_circumcircle_value_error(new_vertex.get_coord())
+                    return
+                if triangle_by_edge not in bad_triangles \
+                        and new_vertex_in_circumcircle:
+                    bad_triangles.add(triangle_by_edge)
+                    self.handle_found_triangle(triangle_by_edge, bad_triangles, new_vertex)
+
+    def handle_vertex_in_circumcircle_value_error(self, point):
+        """point has been found within error margin of a circumcircle, push it to the back of the
+        deque to try triangulate it later"""
+        self.point_pushed_back = True
+        self.next_points.append(point)
+        self.point_tries[point] += 1
+        if config.problematic_point_debug:
+            print(f"{point}: Potentially problematic point location, pushing to back of" \
+                f" deque. Tries: {self.point_tries[point]}")
 
     def iterate_once(self):
         while self.next_points:
@@ -245,7 +271,7 @@ class BowyerWatson:
                 self.edges[key] = edge
             if key not in self.triangles_with_edge:
                 self.triangles_with_edge[key] = []
-            self.triangles_with_edge[key].append(triangle.get_key())
+            self.triangles_with_edge[key].append(triangle)
 
         self.visualize_new(triangle)
         return triangle.get_key()
@@ -258,7 +284,7 @@ class BowyerWatson:
         for edge in edges:
             key = edge.get_key()
             self.edges[key] = edge
-            self.triangles_with_edge[key].remove(triangle.get_key())
+            self.triangles_with_edge[key].remove(triangle)
             if self.triangles_with_edge[key] == []:
                 try:
                     self.visualize_remove(edge)
