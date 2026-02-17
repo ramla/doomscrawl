@@ -234,9 +234,15 @@ class BowyerWatson:
                     self.remove_triangle(triangle)
 
     def restore_super_triangle(self):
-        print(self.super_storage)
+        if config.bw_debug:
+            print("RESTORING SUPER STORAGE:", self.super_storage)
         for triangle in self.super_storage:
             self.triangles[triangle.get_key()] = triangle
+            for edge in triangle.get_edges():
+                key = edge.get_key()
+                if key not in self.triangles_with_edge:
+                    self.triangles_with_edge[key] = []
+                self.triangles_with_edge[key].append(triangle)
             self.visualize_new(triangle)
         self.super_storage = []
 
