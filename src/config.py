@@ -38,7 +38,7 @@ color = {
     }
 color_tri = color["col2"]
 color_tri_active = color["hilite3"]
-color_edge = color["col3"]
+color_edge = color["col2"]
 color_edge_active = color["col4"]
 color_vertex = color["col5"]
 color_vertex_active = color["hilite2"]
@@ -62,7 +62,7 @@ if delay_visualisation:
 circumcircle_anim_drop_scale = 0.95
 
 vertex_radius = thickness/3
-edge_width = thickness/7
+edge_width = thickness/5
 triangle_width = thickness/5
 
 visualisation_delay_min = 0

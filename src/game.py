@@ -8,6 +8,7 @@ from player import Player
 import config
 from bowyer_watson import BowyerWatson
 from visualizer import Visualizer
+from prims import prims
 
 
 class Doomcrawl:
@@ -117,7 +118,9 @@ class Doomcrawl:
                         self.visualizer.clear_final_view(self.bw.final_edges)
                         self.state_machine.set(GameState.CLEARED)
                     elif self.state_machine.get() == GameState.CLEARED:
-                        #prune connections here
+                        edges = self.get_pruned_edges(self.bw.final_edges,
+                                                      start_at=self.dungeon.rooms[0].center)
+                        self.visualizer.redraw_edges(edges)
                         self.state_machine.set(GameState.PRUNED)
                     elif self.state_machine.get() == GameState.PRUNED:
                         #connect rooms here
@@ -180,6 +183,21 @@ class Doomcrawl:
 
     def show_help(self):
         self.viewport.blit(self.help_surface, (0,0))
+
+    def get_pruned_edges(self, bw_edges, start_at=None):
+        nodes = set()
+        edges = []
+        for edge in bw_edges:
+            a, b = edge.get_coords()
+            weight = edge.get_length()
+            nodes.update([a,b])
+            edges.append((a, b, weight))
+        mst = prims(list(nodes), edges, start_at=start_at)
+        mst = [tuple(sorted(x)) for x in mst]
+        edge_objects = [edge for edge in bw_edges if edge.get_coords() in mst]
+        return edge_objects
+
+
 
 class GameState(Enum):
     READY = auto()
