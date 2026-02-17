@@ -111,15 +111,8 @@ class BowyerWatson:
             except ValueError:
                 self.handle_vertex_in_circumcircle_value_error(new_vertex.get_coord())
                 return
-            if not new_vertex_in_circumcircle:
-                color = config.color["col4"]
-                if config.circumcircle_debug:
-                    print(new_vertex,"NOT IN CC OF",triangle)
-            else:
-                color = None
-                if config.circumcircle_debug:
-                    print(new_vertex,"is in CC of",triangle)
-            triangle.visualize_circle(self.visualizer_queue, color=color)
+            triangle.visualize_circle(self.visualizer_queue,
+                                      vertex_inside=new_vertex_in_circumcircle)
             if new_vertex_in_circumcircle:
                 self.handle_found_triangle(triangle, bad_triangles, new_vertex)
                 break
@@ -130,10 +123,10 @@ class BowyerWatson:
                 if not key in bad_tri_edgecount:
                     bad_tri_edgecount[key] = 0
                 bad_tri_edgecount[key] += 1
-                self.visualize_new(edge, active=True, reset_active=True)
+                # self.visualize_new(edge, active=True, reset_active=True)
         polygon = [self.edges[key] for key, count in bad_tri_edgecount.items() if count == 1]
-        for edge in polygon:
-            self.visualize_new(edge, active=True)
+        # for edge in polygon:
+            # self.visualize_new(edge, active=True)
         for triangle in bad_triangles:
             self.remove_triangle(triangle)
         for edge in polygon:
@@ -153,7 +146,7 @@ class BowyerWatson:
         for edge in triangle.get_edges():
             if not edge.get_key() in self.edges:
                 self.edges[edge.get_key()] = edge
-            self.visualize_new(edge, active=True, reset_active=True)
+            # self.visualize_new(edge, active=True, reset_active=True)
             self.visualize_activate(triangle)
         triangle.visualize_remove_circle(self.visualizer_queue)
         for edge in triangle.get_edges():
@@ -285,12 +278,12 @@ class BowyerWatson:
             key = edge.get_key()
             self.edges[key] = edge
             self.triangles_with_edge[key].remove(triangle)
-            if self.triangles_with_edge[key] == []:
-                try:
-                    self.visualize_remove(edge)
-                except KeyError:
-                    if config.visualizer_debug:
-                        print("bw.KeyError:",edge)
+            # if self.triangles_with_edge[key] == []:
+            #     try:
+            #         self.visualize_remove(edge)
+            #     except KeyError:
+            #         if config.visualizer_debug:
+            #             print("bw.KeyError:",edge)
         self.visualize_remove(triangle)
 
     def visualize_remove(self, bw_object):
@@ -554,9 +547,9 @@ class Triangle:
             valid_edges.append(edge)
         return valid_edges
 
-    def visualize_circle(self, visualizer_queue, color=None):
+    def visualize_circle(self, visualizer_queue, vertex_inside=False, color=None):
         if visualizer_queue is not None:
-            visualizer_queue.put(methodcaller("new_circle", self, color=color))
+            visualizer_queue.put(methodcaller("new_circle", self, vertex_inside, color))
 
     def visualize_remove_circle(self, visualizer_queue):
         if visualizer_queue is not None:

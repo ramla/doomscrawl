@@ -95,11 +95,13 @@ class Visualizer:
         if active:
             self.active_triangles.append(self.entities[triangle])
 
-    def new_circle(self, triangle, color=None):
+    def new_circle(self, triangle, vertex_inside=False, color=None):
         """Add the circumcircle of the triangle to entities to draw"""
-        circle = VisualCircumcircle(triangle, color=color)
+        circle = VisualCircumcircle(triangle, vertex_inside=vertex_inside, color=color)
         triangle.circumcircle_key = f"{circle}"
         self.entities[circle.get_key()] = circle
+        if not vertex_inside and color is None:
+            self.event_queue.put_nowait(methodcaller("remove_circle", triangle))
 
     def remove_vertex(self, vertex):
         if not self.testing:
@@ -108,7 +110,9 @@ class Visualizer:
         if config.visualizer_debug:
             print("removing vertex", vertex)
         try:
-            self.entities.pop(vertex)
+            # self.entities.pop(vertex)
+            self.entities[vertex].color = config.color_vertex_rejected
+            self.entities[vertex].anim_new()
         except KeyError:
             if config.visualizer_debug:
                 print("visualizer.remove_vertex() KeyError:", vertex)
@@ -296,14 +300,16 @@ class VisualTriangle:
 
 
 class VisualCircumcircle:
-    def __init__(self, triangle, width=2, color=None):
+    def __init__(self, triangle, width=2, vertex_inside=False, color=None):
         self.accumulator = 0
         self.delete_me = False
         self.keystring = "VCCir" + str(triangle)
         self.width = width
-        if color is None:
-            color = config.color_circumcircle
         self.color_normal = color
+        if vertex_inside:
+            self.color_normal = config.color_circumcircle
+        elif self.color_normal is None:
+            self.color_normal = config.color["col4"]
         self.color = pygame.Color(self.color_normal)
         self.color_fill = pygame.Color(config.color_circumcircle_fill)
         self.radius = triangle.get_circumcircle_radius()

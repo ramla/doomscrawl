@@ -33,6 +33,7 @@ color = {
     "hilite1":  pygame.Color(89,195,195),   # strong cyan
     "hilite2":  pygame.Color(244,91,105),   # bubblegum pink
     "hilite3":  pygame.Color(237,240,96),   # canary yellow
+    "dark1":    pygame.Color(180,25,60),    # rejection red
     "bg":       pygame.Color(20,23,30),     # ink black
     }
 color_tri = color["col2"]
@@ -41,6 +42,7 @@ color_edge = color["col3"]
 color_edge_active = color["col4"]
 color_vertex = color["col5"]
 color_vertex_active = color["hilite2"]
+color_vertex_rejected = color["dark1"]
 color_circumcircle = color["col6"]
 color_circumcircle_fill = color["fill2"]
 color_circumcircle_final = color["col3"]
