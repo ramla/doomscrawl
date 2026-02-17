@@ -70,7 +70,7 @@ class Visualizer:
         if active:
             self.active_vertices.append(self.entities[vertex])
 
-    def new_edge(self, edge, active, reset_active):
+    def new_edge(self, edge, active=False, reset_active=False):
         self.entities[edge.get_key()] = VisualEdge(edge,
                                                    active=active,
                                                    width=config.edge_width,)
@@ -188,6 +188,27 @@ class Visualizer:
                                 line, config.color["light1"])
             y += line_height
         return text_surface
+
+    def clear_final_view(self, edges):
+        to_remove = []
+        for key, entity in self.entities.items():
+            if isinstance(entity, VisualCircumcircle) or isinstance(entity, VisualTriangle):
+                to_remove.append(key)
+        for key in to_remove:
+            self.entities.pop(key)
+        for edge in edges:
+            self.new_edge(edge)
+
+    def redraw_edges(self, edges):
+        to_remove = []
+        for key, entity in self.entities.items():
+            if isinstance(entity, VisualEdge):
+                to_remove.append(key)
+        for key in to_remove:
+            self.entities.pop(key)
+        for edge in edges:
+            self.new_edge(edge)
+
 
 class VisualVertex:
     def __init__(self, center, radius, active, color=config.color_vertex):

@@ -102,6 +102,8 @@ class Doomcrawl:
                 if event.key == pygame.K_F1 or \
                    event.key == pygame.K_h:
                     self.helping = True
+                if event.key == pygame.K_c:
+                    self.visualizer.clear_final_view(self.bw.final_edges)
             if event.type == config.POINT_REJECTED:
                 self.dungeon.handle_point_rejection(event.room_center)
 
