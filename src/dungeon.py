@@ -37,7 +37,9 @@ class Dungeon:
         viewport.blit(overlay, (0, 0))
 
     def add_room(self, size=None, pos=None, center=None, fail_allowed=True):
-        if fail_allowed:
+        if center is not None:
+            tries = 1
+        elif fail_allowed:
             tries = 10
         else:
             tries = 9999
@@ -53,8 +55,8 @@ class Dungeon:
                 self.rooms.append(room)
                 return
             tries -= 1
-        if config.room_debug:
-            print(f"room creation failed, tries = {tries}")
+        if config.room_debug or center is not None:
+            print(f"Room creation failed (overlapping with existing): center {center}")
 
     def overlapping_existing(self, mask, offset):
         """Check if [new room's] mask overlaps existing ones, but only if randomising rooms"""
