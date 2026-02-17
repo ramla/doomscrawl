@@ -1,4 +1,5 @@
 import sys
+from enum import Enum, auto
 import pygame
 import pygame.freetype
 
@@ -31,8 +32,7 @@ class Doomcrawl:
         self.player = Player(self.dungeon.player_start_pos, (config.thickness, config.thickness))
         self.visualizer = Visualizer(self.viewport)
         self.bw = BowyerWatson(visualizer_queue=self.visualizer.event_queue)
-        self.step_triangulation = False
-        self.keep_triangulating = False
+        self.state_machine = StateMachine()
         self.running = True
         self.helping = True
 
@@ -60,17 +60,22 @@ class Doomcrawl:
                 room.anim_pop_tick(self.viewport, frame_time)
                 pygame.draw.rect(self.viewport, config.color["col1"], room)
 
-            if self.bw.ready:
-                self.keep_triangulating = False
-            else:
-                if self.keep_triangulating:
-                    self.bw.iterate_once()
-                    if self.step_triangulation:
-                        self.step_triangulation = False
-                        self.keep_triangulating = False
-                elif self.step_triangulation:
-                    self.bw.iterate_once()
-                    self.step_triangulation = False
+            match self.state_machine.get():
+                case GameState.STEPPING:
+                    if self.bw.ready and len(self.bw.next_points) == 0:
+                        self.bw.add_points(points=self.dungeon.get_room_centers())
+                    else:
+                        self.bw.iterate_once()
+                    if self.bw.ready:
+                        self.state_machine.set(GameState.TRIANGULATED)
+                case GameState.TRIANGULATING:
+                    if self.visualizer.event_queue.empty():
+                        if self.bw.ready and len(self.bw.next_points) == 0:
+                            self.bw.add_points(self.dungeon.get_room_centers())
+                        else:
+                            self.bw.iterate_once()
+                        if self.bw.ready:
+                            self.state_machine.set(GameState.TRIANGULATED)
 
             self.visualizer.visualize(frame_time)
 
@@ -91,19 +96,35 @@ class Doomcrawl:
                 self.running = False
             if event.type == pygame.KEYDOWN:
                 self.helping = False
-                if event.key == pygame.K_r:# and config.random_rooms:
-                    self.dungeon.add_room()
+                if event.key == pygame.K_r:
+                    if self.state_machine.get() == GameState.READY:
+                        self.dungeon.add_room()
                 if event.key == pygame.K_t:
-                    self.bw.add_points(self.dungeon.get_room_centers())
+                    try:
+                        self.state_machine.set(GameState.TRIANGULATING)
+                    except ValueError:
+                        pass
                 if event.key == pygame.K_e:
-                    self.step_triangulation = True
-                if event.key == pygame.K_f:
-                    self.keep_triangulating = True
+                    try:
+                        self.state_machine.set(GameState.STEPPING)
+                    except ValueError:
+                        pass
                 if event.key == pygame.K_F1 or \
                    event.key == pygame.K_h:
                     self.helping = True
-                if event.key == pygame.K_c:
-                    self.visualizer.clear_final_view(self.bw.final_edges)
+                if event.key == pygame.K_f:
+                    if self.state_machine.get() == GameState.TRIANGULATED:
+                        self.visualizer.clear_final_view(self.bw.final_edges)
+                        self.state_machine.set(GameState.CLEARED)
+                    elif self.state_machine.get() == GameState.CLEARED:
+                        #prune connections here
+                        self.state_machine.set(GameState.PRUNED)
+                    elif self.state_machine.get() == GameState.PRUNED:
+                        #connect rooms here
+                        self.state_machine.set(GameState.CONNECTED)
+                    elif self.state_machine.get() == GameState.CONNECTED:
+                        #clear corridors here?
+                        self.state_machine.set(GameState.READY)
             if event.type == config.POINT_REJECTED:
                 self.dungeon.handle_point_rejection(event.room_center)
 
@@ -159,3 +180,40 @@ class Doomcrawl:
 
     def show_help(self):
         self.viewport.blit(self.help_surface, (0,0))
+
+class GameState(Enum):
+    READY = auto()
+    STEPPING = auto()
+    TRIANGULATING = auto()
+    TRIANGULATED = auto()
+    CLEARED = auto()
+    PRUNED = auto()
+    CONNECTED = auto()
+
+TRANSITIONS = {
+    GameState.READY:            {GameState.TRIANGULATING,
+                                 GameState.STEPPING},
+    GameState.TRIANGULATING:    {GameState.TRIANGULATING,
+                                 GameState.STEPPING,
+                                 GameState.TRIANGULATED},
+    GameState.STEPPING:         {GameState.TRIANGULATING,
+                                 GameState.TRIANGULATED},
+    GameState.TRIANGULATED:     {GameState.READY, GameState.CLEARED, GameState.PRUNED},
+    GameState.CLEARED:          {GameState.READY, GameState.PRUNED},
+    GameState.PRUNED:           {GameState.READY, GameState.CONNECTED},
+    GameState.CONNECTED:        {GameState.READY}
+}
+
+class StateMachine:
+    def __init__(self):
+        self.__state__ = GameState.READY
+
+    def set(self, new_state):
+        if new_state in TRANSITIONS[self.__state__]:
+            self.__state__ = new_state
+            print(new_state)
+        else:
+            raise ValueError
+
+    def get(self):
+        return self.__state__

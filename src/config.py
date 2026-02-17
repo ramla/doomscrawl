@@ -78,8 +78,8 @@ helptext_test = "Q, Esc        Next exception\n" \
 helptext      = "Esc, Q        Quit\n" \
                 "WASD        Move\n" \
                 "      R          Randomise another room\n" \
-                "      T          Initialise triangulation\n" \
-                "      F          Triangulate all\n" \
-                "      E          Triangulate one point\n" \
+                "      E          Step triangulation\n" \
+                "      T          Triangulate all\n" \
+                "\n" \
                 "    F1 or H to display this again\n" \
                 "        any key to continue"
