@@ -28,7 +28,7 @@ class Doomcrawl:
 
         if rooms:
             config.random_rooms = False
-        self.dungeon = Dungeon((config.viewport_x, config.viewport_y), rooms)
+        self.dungeon = Dungeon((config.viewport_x, config.viewport_y), rooms, exceptions)
         self.player = Player(self.dungeon.player_start_pos, (config.thickness, config.thickness))
         self.visualizer = Visualizer(self.viewport)
         self.bw = BowyerWatson(visualizer_queue=self.visualizer.event_queue)

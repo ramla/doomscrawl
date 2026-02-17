@@ -3,11 +3,12 @@ import pygame
 import config
 
 class Dungeon:
-    def __init__(self, screen_size, rooms):
+    def __init__(self, screen_size, rooms, exceptions=False):
         self.screen_size = screen_size
         self.init_collision_surface()
         self.render_collision_mask()
         self.init_texture()
+        self.ignore_collision = exceptions
         self.rooms = []
         if rooms is None:
             self.add_room(fail_allowed=False)
@@ -48,7 +49,9 @@ class Dungeon:
             room = Room(size=size, pos=pos, center=center)
             if config.room_debug:
                 print(f"center {center}, size {room.size}, offset {room.offset}")
-            if not self.overlapping_existing(room.mask, room.get_mask_offset()):
+            if (not self.overlapping_existing(room.mask, room.get_mask_offset())
+                and not self.ignore_collision
+            ):
                 self.collision_surface.blit(room.surface, room.offset)
                 self.render_collision_mask()
                 room.anim_pop_init()
