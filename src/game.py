@@ -67,6 +67,7 @@ class Doomcrawl:
                         self.bw.add_points(points=self.dungeon.get_room_centers())
                     else:
                         self.bw.iterate_once()
+                        self.state_machine.set(GameState.STEPPED)
                     if self.bw.ready:
                         self.state_machine.set(GameState.TRIANGULATED)
                 case GameState.TRIANGULATING:
@@ -202,6 +203,7 @@ class Doomcrawl:
 class GameState(Enum):
     READY = auto()
     STEPPING = auto()
+    STEPPED = auto()
     TRIANGULATING = auto()
     TRIANGULATED = auto()
     CLEARED = auto()
@@ -215,6 +217,10 @@ TRANSITIONS = {
                                  GameState.STEPPING,
                                  GameState.TRIANGULATED},
     GameState.STEPPING:         {GameState.TRIANGULATING,
+                                 GameState.STEPPED,
+                                 GameState.TRIANGULATED},
+    GameState.STEPPED:          {GameState.TRIANGULATING,
+                                 GameState.STEPPING,
                                  GameState.TRIANGULATED},
     GameState.TRIANGULATED:     {GameState.READY, GameState.CLEARED, GameState.PRUNED},
     GameState.CLEARED:          {GameState.READY, GameState.PRUNED},
