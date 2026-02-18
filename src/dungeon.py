@@ -50,7 +50,7 @@ class Dungeon:
             if config.room_debug:
                 print(f"center {center}, size {room.size}, offset {room.offset}")
             if (not self.overlapping_existing(room.mask, room.get_mask_offset())
-                and not self.ignore_collision
+                or self.ignore_collision
             ):
                 self.collision_surface.blit(room.surface, room.offset)
                 self.render_collision_mask()
