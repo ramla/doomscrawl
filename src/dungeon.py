@@ -1,21 +1,25 @@
 from random import randint
 import pygame
 import config
+from astar import AStar
 
 class Dungeon:
-    def __init__(self, screen_size, rooms, exceptions=False):
+    def __init__(self, screen_size, rooms, exceptions=False, visualizer_queue=None):
         self.screen_size = screen_size
         self.init_collision_surface()
         self.render_collision_mask()
         self.init_texture()
         self.ignore_collision = exceptions
-        self.rooms = []
+        self.rooms = {}
+        self.corridors = {}
         if rooms is None:
             self.add_room(fail_allowed=False)
+            self.player_start_pos = list(self.rooms.values())[0].get_center()
         else:
+            self.player_start_pos = rooms[0][0]
             for room in rooms:
                 self.add_room(center=room[0], size=room[1])
-        self.player_start_pos = self.rooms[0].center
+        self.astar = AStar(self.collision_mask, self.rooms, visualizer_queue=visualizer_queue)
 
     def init_collision_surface(self):
         self.collision_surface = pygame.Surface((self.screen_size[0], self.screen_size[1]))
@@ -49,40 +53,44 @@ class Dungeon:
             room = Room(size=size, pos=pos, center=center)
             if config.room_debug:
                 print(f"center {center}, size {room.size}, offset {room.offset}")
-            if (not self.overlapping_existing(room.mask, room.get_mask_offset())
+            if (not self.collision_mask.overlap(room.mask, room.get_mask_offset())
                 or self.ignore_collision
             ):
                 self.collision_surface.blit(room.surface, room.offset)
                 self.render_collision_mask()
                 room.anim_pop_init()
-                self.rooms.append(room)
+                self.rooms[room.get_center()] = room
                 return
             tries -= 1
         if config.room_debug or center is not None:
             print(f"Room creation failed (overlapping with existing): center {center}")
 
-    def overlapping_existing(self, mask, offset):
-        """Check if [new room's] mask overlaps existing ones, but only if randomising rooms"""
-        if self.collision_mask.overlap(mask, offset):
-            return True
-        return False
-
     def get_room_centers(self):
         centers = []
         sizes = []
-        for room in self.rooms:
-            centers.append(room.center)
+        for room in self.rooms.values():
+            centers.append(room.get_center())
         if config.room_debug:
-            for room in self.rooms:
+            for room in self.rooms.values():
                 sizes.append(room.size)
             print("room list:",list(zip(centers, sizes)))
         return centers
 
     def handle_point_rejection(self, point):
-        for room in self.rooms:
-            if room.center == point:
-                self.rooms.remove(room)
+        for room in self.rooms.values():
+            if room.get_center() == point:
+                self.rooms.pop(room.get_center())
                 break
+
+    def create_corridors(self, edges):
+        for edge in edges:
+            key = edge.get_key()
+            a, b = edge.get_coords()
+            self.corridors[key] = self.astar.get_path(a, b, edge.get_slope())
+
+    def get_player_room_center(self):
+        return self.player_start_pos
+
 
 class Room(pygame.Rect):
     def __init__(self, size=None, pos=None, center=None):
@@ -101,12 +109,27 @@ class Room(pygame.Rect):
         super().__init__(self.offset[0], self.offset[1], self.size[0], self.size[1])
 
         self.ratio = self.width / self.height
+        self.pop_timer = 0
+        self.animation_copy = None
 
         margin = config.thickness
         self.mask = pygame.Mask((self.size[0]+2*margin, self.size[1]+2*margin), fill=True)
 
         self.surface = pygame.Surface(self.size)
         self.surface.fill(config.color["col1"])
+
+    def get_center(self):
+        return self.center
+
+    def get_door(self, slope, b_room=False):
+        if slope > 1 and b_room:    # door on bottom edge
+            return self.center[0], self.center[1]+self.size[1]/2+config.corridor_width
+        if slope > 1:               # door on top edge
+            return self.center[0], self.center[1]-self.size[1]/2-config.corridor_width
+        if b_room:                  # door on left edge
+            return self.center[0]-self.size[0]/2-config.corridor_width, self.center[1]
+                                    # door on right edge
+        return self.center[0]+self.size[0]/2+config.corridor_width, self.center[1]
 
     def get_random_size(self):
         x = randint(config.room_size_min[0], config.room_size_max[0])
@@ -143,3 +166,17 @@ class Room(pygame.Rect):
             pygame.draw.rect(viewport, config.color["col1"], self.animation_copy)
         else:
             pass
+
+
+class Corridor:
+    def __init__(self, edge, astar):
+        self.edge = edge
+        self.a, self.b = self.edge.get_coords()
+
+        slope = edge.get_slope()
+        path = astar.get_path(self.a, self.b, slope)
+
+        margin = config.thickness
+        self.mask = pygame.Mask((self.size[0]+2*margin, self.size[1]+2*margin), fill=True)
+
+        self.surface = pygame.Surface(self.size)

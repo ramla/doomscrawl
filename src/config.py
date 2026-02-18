@@ -64,6 +64,7 @@ circumcircle_anim_drop_scale = 0.95
 vertex_radius = thickness/3
 edge_width = thickness/5
 triangle_width = thickness/5
+corridor_width = thickness*1.5
 
 visualisation_delay_min = 0
 if delay_visualisation:
@@ -80,6 +81,6 @@ helptext      = "Esc, Q        Quit\n" \
                 "      R          Randomise another room\n" \
                 "      E          Step triangulation\n" \
                 "      T          Triangulate all\n" \
-                "\n" \
+                "      F          Next phase\n" \
                 "    F1 or H to display this again\n" \
                 "        any key to continue"

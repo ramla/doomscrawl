@@ -29,13 +29,15 @@ class Doomcrawl:
 
         if rooms:
             config.random_rooms = False
-        self.dungeon = Dungeon((config.viewport_x, config.viewport_y), rooms, exceptions)
-        self.player = Player(self.dungeon.player_start_pos, (config.thickness, config.thickness))
         self.visualizer = Visualizer(self.viewport)
+        self.dungeon = Dungeon((config.viewport_x, config.viewport_y), rooms, exceptions,
+                               self.visualizer.event_queue)
+        self.player = Player(self.dungeon.player_start_pos, (config.thickness, config.thickness))
         self.bw = BowyerWatson(visualizer_queue=self.visualizer.event_queue)
         self.state_machine = StateMachine()
         self.running = True
         self.helping = True
+        self.pruned_edges = None
 
     def start(self):
         if self.visually_confirm_test_exceptions:
@@ -57,7 +59,7 @@ class Doomcrawl:
 
             self.viewport.fill(config.color["bg"])
 
-            for room in self.dungeon.rooms:
+            for room in self.dungeon.rooms.values():
                 room.anim_pop_tick(self.viewport, frame_time)
                 pygame.draw.rect(self.viewport, config.color["col1"], room)
 
@@ -86,6 +88,7 @@ class Doomcrawl:
             if config.collision_debug:
                 self.dungeon.draw_collision_overlay(self.viewport)
                 self.player.draw_collision_overlay(self.viewport)
+                self.dungeon.astar.draw_collision_overlay(self.viewport)
 
             if self.helping:
                 self.show_help()
@@ -119,16 +122,18 @@ class Doomcrawl:
                         self.visualizer.clear_final_view(self.bw.final_edges)
                         self.state_machine.set(GameState.CLEARED)
                     elif self.state_machine.get() == GameState.CLEARED:
-                        edges = self.get_pruned_edges(self.bw.final_edges,
-                                                      start_at=self.dungeon.rooms[0].center)
-                        self.visualizer.redraw_edges(edges)
+                        self.pruned_edges = self.get_pruned_edges(self.bw.final_edges,
+                                            start_at=self.dungeon.get_player_room_center())
+                        self.visualizer.redraw_edges(self.pruned_edges)
                         self.state_machine.set(GameState.PRUNED)
                     elif self.state_machine.get() == GameState.PRUNED:
-                        #connect rooms here
+                        self.dungeon.create_corridors(self.pruned_edges)
                         self.state_machine.set(GameState.CONNECTED)
                     elif self.state_machine.get() == GameState.CONNECTED:
                         #clear corridors here?
                         self.state_machine.set(GameState.READY)
+                if event.key == pygame.K_0:
+                    config.collision_debug = not config.collision_debug
             if event.type == config.POINT_REJECTED:
                 self.dungeon.handle_point_rejection(event.room_center)
 
@@ -197,7 +202,6 @@ class Doomcrawl:
         mst = [tuple(sorted(x)) for x in mst]
         edge_objects = [edge for edge in bw_edges if edge.get_coords() in mst]
         return edge_objects
-
 
 
 class GameState(Enum):
