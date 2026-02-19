@@ -36,6 +36,7 @@ color = {
     "dark1":    pygame.Color(180,25,60),    # rejection red
     "bg":       pygame.Color(20,23,30),     # ink black
     }
+color_room = color["col1"]
 color_tri = color["col2"]
 color_tri_active = color["hilite3"]
 color_edge = color["col2"]

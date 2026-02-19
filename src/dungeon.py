@@ -85,11 +85,21 @@ class Dungeon:
     def create_corridors(self, edges):
         for edge in edges:
             key = edge.get_key()
-            a, b = edge.get_coords()
-            self.corridors[key] = self.astar.get_path(a, b, edge.get_slope())
+            self.corridors[key] = Corridor(edge, self.astar)
+        for corridor in self.corridors.values():
+            self.collision_mask.draw(corridor.get_mask(), (0,0))
 
     def get_player_room_center(self):
         return self.player_start_pos
+
+    def draw_dungeon(self, viewport, frame_time):
+        for room in self.rooms.values():
+            room.anim_pop_tick(viewport, frame_time)
+            pygame.draw.rect(viewport, config.color_room, room)
+        for corridor in self.corridors.values():
+            corridor_bitmap = corridor.get_mask().to_surface(setcolor=config.color_room,
+                                                    unsetcolor=(0, 0, 0, 0))
+            viewport.blit(corridor_bitmap, (0, 0))
 
 
 class Room(pygame.Rect):
@@ -174,9 +184,7 @@ class Corridor:
         self.a, self.b = self.edge.get_coords()
 
         slope = edge.get_slope()
-        path = astar.get_path(self.a, self.b, slope)
+        self.path, self.mask = astar.get_path(self.a, self.b, slope)
 
-        margin = config.thickness
-        self.mask = pygame.Mask((self.size[0]+2*margin, self.size[1]+2*margin), fill=True)
-
-        self.surface = pygame.Surface(self.size)
+    def get_mask(self):
+        return self.mask

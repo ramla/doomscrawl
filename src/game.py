@@ -59,9 +59,7 @@ class Doomcrawl:
 
             self.viewport.fill(config.color["bg"])
 
-            for room in self.dungeon.rooms.values():
-                room.anim_pop_tick(self.viewport, frame_time)
-                pygame.draw.rect(self.viewport, config.color["col1"], room)
+            self.dungeon.draw_dungeon(self.viewport, frame_time)
 
             match self.state_machine.get():
                 case GameState.STEPPING:
@@ -126,6 +124,7 @@ class Doomcrawl:
                     elif self.state_machine.get() == GameState.CLEARED:
                         self.pruned_edges = self.get_pruned_edges(self.bw.final_edges,
                                             start_at=self.dungeon.get_player_room_center())
+                        # self.pruned_edges = self.bw.final_edges
                         self.visualizer.redraw_edges(self.pruned_edges)
                         self.state_machine.set(GameState.PRUNED)
                     elif self.state_machine.get() == GameState.PRUNED:
