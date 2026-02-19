@@ -118,7 +118,9 @@ class Doomcrawl:
                    event.key == pygame.K_h:
                     self.helping = True
                 if event.key == pygame.K_f:
-                    if self.state_machine.get() == GameState.TRIANGULATED:
+                    if self.state_machine.get() in [GameState.READY, GameState.STEPPED]:
+                        self.state_machine.set(GameState.STEPPING)
+                    elif self.state_machine.get() == GameState.TRIANGULATED:
                         self.visualizer.clear_final_view(self.bw.final_edges)
                         self.state_machine.set(GameState.CLEARED)
                     elif self.state_machine.get() == GameState.CLEARED:
