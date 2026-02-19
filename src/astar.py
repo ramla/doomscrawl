@@ -13,21 +13,22 @@ class AStar:
         space_size_px = (config.thickness*1.5, config.thickness*1.5)
         self.space = pygame.Mask(space_size_px, fill=True)
         self.dungeon_mask = dungeon_mask
-        self.goal, self.goal_mask = None, None
+        self.goals, self.goal_mask = None, None
         self.goal_mask_cumulative = pygame.Mask((config.viewport_x, config.viewport_y))
 
     def get_path(self, a, b, slope):
         start = self.centerify(self.room_lookup[a].get_door(slope))
-        if self.visualizer_queue:
-            self.visualizer_queue.put(methodcaller("new_vertex", Vertex(start[0], start[1]),
-                                                    active=True, reset_active=True))
-        self.goal = self.centerify(self.room_lookup[b].get_door(slope, b_room=True))
-        if self.visualizer_queue:
-            self.visualizer_queue.put(methodcaller("new_vertex", Vertex(self.goal[0], self.goal[1]),
-                                                    active=True, reset_active=False))
+        # if self.visualizer_queue:
+        #     self.visualizer_queue.put(methodcaller("new_vertex", Vertex(start[0], start[1]),
+        #                                             active=True, reset_active=True))
+        self.goals = [self.centerify(door) for door in self.room_lookup[b].get_doors()]
+        # if self.visualizer_queue:
+        #     self.visualizer_queue.put(methodcaller("new_vertex", Vertex(self.goal[0], self.goal[1]),
+        #                                             active=True, reset_active=False))
         self.goal_mask = pygame.Mask((config.viewport_x, config.viewport_y))
-        self.goal_mask.draw(self.space, self.goal)
-        self.goal_mask_cumulative.draw(self.space, self.goal)
+        for goal in self.goals:
+            self.goal_mask.draw(self.space, goal)
+        # self.goal_mask_cumulative.draw(self.space, self.goal)
 
         path = set()
         prev_pos_in_path = False
@@ -40,6 +41,13 @@ class AStar:
             #                                            active=False, reset_active=False))
             if self.goal_reached(pos):
                 self.goal_mask_cumulative.draw(self.space, pos)
+                reached_goal = None
+                distance = float("inf")
+                for goal in self.goals:
+                    if self.euclidean(pos, goal) < distance:
+                        distance = self.euclidean(pos, goal)
+                        reached_goal = goal
+                self.goal_mask_cumulative.draw(self.space, reached_goal)
                 return path, self.goal_mask_cumulative
             if pos in path and prev_pos_in_path:
                 path.remove(pos)
@@ -50,7 +58,7 @@ class AStar:
                 path.add(pos)
                 self.goal_mask_cumulative.draw(self.space, pos)
             for neighbor in self.neighbors(pos):
-                distance = self.euclidean(neighbor, self.goal)
+                distance = min(self.euclidean(neighbor, goal) for goal in self.goals)
                 heapq.heappush(queue, (distance, neighbor))
         return path, self.goal_mask_cumulative
 
