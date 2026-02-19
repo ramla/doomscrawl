@@ -16,8 +16,14 @@ class AStar:
         self.goal_mask_cumulative = pygame.Mask((config.viewport_x, config.viewport_y))
 
     def get_path(self, a, b, slope):
-        start = self.room_lookup[a].get_door(slope)
-        self.goal = self.room_lookup[b].get_door(slope, b_room=True)
+        start = self.centerify(self.room_lookup[a].get_door(slope))
+        if self.visualizer_queue:
+            self.visualizer_queue.put(methodcaller("new_vertex", Vertex(start[0], start[1]),
+                                                    active=True, reset_active=True))
+        self.goal = self.centerify(self.room_lookup[b].get_door(slope, b_room=True))
+        if self.visualizer_queue:
+            self.visualizer_queue.put(methodcaller("new_vertex", Vertex(self.goal[0], self.goal[1]),
+                                                    active=True, reset_active=False))
         self.goal_mask = pygame.Mask((config.viewport_x, config.viewport_y))
         self.goal_mask.draw(self.space, self.goal)
         self.goal_mask_cumulative.draw(self.space, self.goal)
@@ -32,7 +38,7 @@ class AStar:
             print("tässäkin ollaa")
             if self.visualizer_queue:
                 self.visualizer_queue.put(methodcaller("new_vertex", Vertex(pos[0], pos[1]),
-                                                       active=True, reset_active=True))
+                                                       active=False, reset_active=False))
             if self.goal_reached(pos):
                 print("GOAL REACHED FRFR")
                 return path
@@ -81,6 +87,9 @@ class AStar:
         overlay = self.goal_mask_cumulative.to_surface(setcolor=(200, 0, 0, 100),
                                                        unsetcolor=(0, 0, 0, 0))
         viewport.blit(overlay, (0,0))
+
+    def centerify(self, point):
+        return point[0]-config.thickness*.75, point[1]-config.thickness*.75
 
 # grid_size = (config.viewport_x//space_size_px[0], config.viewport_y//space_size_px[1])
 # start = (a[0]//grid_size[0], a[1]//grid_size[1])

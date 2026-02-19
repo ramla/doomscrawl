@@ -122,14 +122,14 @@ class Room(pygame.Rect):
         return self.center
 
     def get_door(self, slope, b_room=False):
-        if slope > 1 and b_room:    # door on bottom edge
-            return self.center[0], self.center[1]+self.size[1]/2+config.corridor_width
-        if slope > 1:               # door on top edge
-            return self.center[0], self.center[1]-self.size[1]/2-config.corridor_width
+        if slope > 1 and b_room or slope < -1 and not b_room:    # door on bottom edge
+            return self.center[0], self.center[1]-self.size[1]/2-config.corridor_width/2
+        if slope > 1 or slope < -1 and b_room:               # door on top edge
+            return self.center[0], self.center[1]+self.size[1]/2+config.corridor_width/2
         if b_room:                  # door on left edge
-            return self.center[0]-self.size[0]/2-config.corridor_width, self.center[1]
+            return self.center[0]-self.size[0]/2-config.corridor_width/2, self.center[1]
                                     # door on right edge
-        return self.center[0]+self.size[0]/2+config.corridor_width, self.center[1]
+        return self.center[0]+self.size[0]/2+config.corridor_width/2, self.center[1]
 
     def get_random_size(self):
         x = randint(config.room_size_min[0], config.room_size_max[0])
