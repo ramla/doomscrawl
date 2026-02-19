@@ -1,5 +1,6 @@
 import heapq
 from operator import methodcaller
+from math import sqrt
 import pygame
 import config
 from bowyer_watson import Vertex
@@ -30,14 +31,15 @@ class AStar:
 
         path = set()
         prev_pos_in_path = False
-        queue = [(self.squared_euclidean(a, b), start)]
+        queue = [(self.euclidean(a, b), start)]
         heapq.heapify(queue)
         while len(queue) > 0:
             _, pos = heapq.heappop(queue)
-            if self.visualizer_queue:
-                self.visualizer_queue.put(methodcaller("new_vertex", Vertex(pos[0], pos[1]),
-                                                       active=False, reset_active=False))
+            # if self.visualizer_queue:
+            #     self.visualizer_queue.put(methodcaller("new_vertex", Vertex(pos[0], pos[1]),
+            #                                            active=False, reset_active=False))
             if self.goal_reached(pos):
+                self.goal_mask_cumulative.draw(self.space, pos)
                 return path, self.goal_mask_cumulative
             if pos in path and prev_pos_in_path:
                 path.remove(pos)
@@ -48,12 +50,12 @@ class AStar:
                 path.add(pos)
                 self.goal_mask_cumulative.draw(self.space, pos)
             for neighbor in self.neighbors(pos):
-                distance = self.squared_euclidean(neighbor, self.goal)
+                distance = self.euclidean(neighbor, self.goal)
                 heapq.heappush(queue, (distance, neighbor))
         return path, self.goal_mask_cumulative
 
     def neighbors(self, pos):
-        step = config.corridor_width
+        step = config.corridor_width/2
         neighbors = ((pos[0]+step, pos[1]),
                      (pos[0]-step, pos[1]),
                      (pos[0], pos[1]+step),
@@ -61,12 +63,8 @@ class AStar:
         neibs = [new_pos for new_pos in neighbors if self.is_valid_position(new_pos)]
         return neibs
 
-    def squared_euclidean(self, a, b):
-        """squared distance"""
-        return (a[0]-b[0])**2 + (a[1]-b[1])**2
-
-    def blocky_distance(self, a, b):
-        return a[0]-b[0] + a[1]-b[1]
+    def euclidean(self, a, b):
+        return sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
 
     def is_valid_position(self, pos):
         overlap, reached = self.dungeon_mask.overlap(self.space, pos), self.goal_reached(pos)
