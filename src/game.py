@@ -68,7 +68,7 @@ class Doomcrawl:
                     else:
                         self.bw.iterate_once()
                         self.state_machine.set(GameState.STEPPED)
-                    if self.bw.ready:
+                    if self.bw.ready and self.visualizer.event_queue.empty():
                         self.state_machine.set(GameState.TRIANGULATED)
                 case GameState.TRIANGULATING:
                     if self.visualizer.event_queue.empty():
@@ -107,25 +107,23 @@ class Doomcrawl:
                         self.state_machine.set(GameState.TRIANGULATING)
                     except ValueError:
                         pass
-                if event.key == pygame.K_e:
-                    try:
-                        self.state_machine.set(GameState.STEPPING)
-                    except ValueError:
-                        pass
                 if event.key == pygame.K_F1 or \
                    event.key == pygame.K_h:
                     self.helping = True
                 if event.key == pygame.K_f:
-                    if self.state_machine.get() in [GameState.READY, GameState.STEPPED]:
+                    if self.state_machine.get() in [GameState.READY, GameState.STEP_CLEARED]:
                         self.state_machine.set(GameState.STEPPING)
                     elif self.state_machine.get() == GameState.TRIANGULATED:
-                        self.visualizer.clear_final_view(self.bw.final_edges)
-                        self.state_machine.set(GameState.CLEARED)
-                    elif self.state_machine.get() == GameState.CLEARED:
+                        self.visualizer.method_to_queue("clear_final_view", self.bw.final_edges)
+                        self.state_machine.set(GameState.CCS_CLEARED)
+                    elif self.state_machine.get() == GameState.STEPPED:
+                        self.visualizer.method_to_queue("clear_entities_by_type", circumcircles=True)
+                        self.state_machine.set(GameState.STEP_CLEARED)
+                    elif self.state_machine.get() == GameState.CCS_CLEARED:
                         self.pruned_edges = self.get_pruned_edges(self.bw.final_edges,
                                             start_at=self.dungeon.get_player_room_center())
                         # self.pruned_edges = self.bw.final_edges
-                        self.visualizer.redraw_edges(self.pruned_edges)
+                        self.visualizer.method_to_queue("redraw_edges", self.pruned_edges)
                         self.state_machine.set(GameState.PRUNED)
                     elif self.state_machine.get() == GameState.PRUNED:
                         self.dungeon.create_corridors(self.pruned_edges)
@@ -209,9 +207,10 @@ class GameState(Enum):
     READY = auto()
     STEPPING = auto()
     STEPPED = auto()
+    STEP_CLEARED = auto()
     TRIANGULATING = auto()
     TRIANGULATED = auto()
-    CLEARED = auto()
+    CCS_CLEARED = auto()
     PRUNED = auto()
     CONNECTED = auto()
 
@@ -225,10 +224,13 @@ TRANSITIONS = {
                                  GameState.STEPPED,
                                  GameState.TRIANGULATED},
     GameState.STEPPED:          {GameState.TRIANGULATING,
+                                 GameState.STEP_CLEARED,
+                                 GameState.TRIANGULATED},
+    GameState.STEP_CLEARED:     {GameState.TRIANGULATING,
                                  GameState.STEPPING,
                                  GameState.TRIANGULATED},
-    GameState.TRIANGULATED:     {GameState.READY, GameState.CLEARED, GameState.PRUNED},
-    GameState.CLEARED:          {GameState.READY, GameState.PRUNED},
+    GameState.TRIANGULATED:     {GameState.READY, GameState.CCS_CLEARED, GameState.PRUNED},
+    GameState.CCS_CLEARED:          {GameState.READY, GameState.PRUNED},
     GameState.PRUNED:           {GameState.READY, GameState.CONNECTED},
     GameState.CONNECTED:        {GameState.READY}
 }

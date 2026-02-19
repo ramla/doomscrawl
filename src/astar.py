@@ -9,7 +9,6 @@ class AStar:
     def __init__(self, dungeon_mask, room_lookup, visualizer_queue=None):
         self.room_lookup = room_lookup
         self.visualizer_queue = visualizer_queue
-        print("viz queue",self.visualizer_queue)
         space_size_px = (config.thickness*1.5, config.thickness*1.5)
         self.space = pygame.Mask(space_size_px, fill=True)
         self.dungeon_mask = dungeon_mask

@@ -12,6 +12,12 @@ visualizer_debug = False
 delay_visualisation = True
 random_rooms = True
 draw_coords = False
+any_debug = circumcircle_debug or \
+            collision_debug or \
+            bw_debug or \
+            problematic_point_debug or \
+            visualizer_debug
+delay_visualisation = True
 
 viewport_x = 1200
 viewport_y = 700
@@ -80,8 +86,8 @@ helptext_test = "Q, Esc        Next exception\n" \
 helptext      = "Esc, Q        Quit\n" \
                 "WASD        Move\n" \
                 "      R          Randomise another room\n" \
-                "      E          Step triangulation\n" \
+                "\n" \
                 "      T          Triangulate all\n" \
-                "      F          Next phase\n" \
+                "      F          Step triangulation / Next Phase\n" \
                 "    F1 or H to display this again\n" \
                 "        any key to continue"

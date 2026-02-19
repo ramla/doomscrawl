@@ -79,6 +79,8 @@ class BowyerWatson:
         Parameters:
             points: a list of tuples of x and y coordinates
         """
+        if config.any_debug:
+            print(f"-----------\nadding points:\n{points}\n------------")
         if points and self.ready:
             new_points = list(set(points) - set(self.points))
             self.next_points.extend(new_points)
@@ -138,7 +140,7 @@ class BowyerWatson:
 
     def handle_found_triangle(self, triangle, bad_triangles, new_vertex):
         if self.point_pushed_back:
-            triangle.visualize_remove_circle(self.visualizer_queue)
+            # triangle.visualize_remove_circle(self.visualizer_queue)
             return
         for vertex in triangle.get_vertices():
             self.visualize_activate(vertex)
@@ -148,7 +150,7 @@ class BowyerWatson:
                 self.edges[edge.get_key()] = edge
             # self.visualize_new(edge, active=True, reset_active=True)
             self.visualize_activate(triangle)
-        triangle.visualize_remove_circle(self.visualizer_queue)
+        # triangle.visualize_remove_circle(self.visualizer_queue)
         for edge in triangle.get_edges():
             for triangle_by_edge in self.triangles_with_edge[edge.get_key()]:
                 try:
@@ -212,6 +214,7 @@ class BowyerWatson:
     def finalize_triangulation(self):
         self.remove_super_tri()
         if self.visualizer_queue:
+            self.visualizer_queue.put(methodcaller("clear_entities_by_type", circumcircles=True))
             self.draw_final_circumcircles()
             for triangle in self.triangles:
                 self.visualize_remove(triangle)
@@ -277,7 +280,13 @@ class BowyerWatson:
 
     def remove_triangle(self, triangle):
         if not triangle.get_key() in self.triangles:
+            if config.bw_debug:
+                print(f"remove triangle: NOT FOUND {triangle}")
             return triangle
+        if config.bw_debug:
+            for vert in self.super_verts:
+                if vert not in triangle.get_vertices():
+                    print(f"remove triangle: {triangle}")
         self.triangles.pop(triangle.get_key())
         edges = triangle.get_edges()
         for edge in edges:
@@ -332,9 +341,11 @@ class BowyerWatson:
         edge_a, edge_b = Edge(vertex_a, vertex_b), Edge(vertex_b, vertex_c)
         slope_a, slope_b = edge_a.get_slope(), edge_b.get_slope()
         if two_or_more_same_points or slope_a == slope_b:
-            if config.circumcircle_debug:
-                print("invalid triangle: ", vertex_a, vertex_b, vertex_c,
-                  f"\n  slopes {slope_a}, {slope_b}")
+            if config.any_debug:
+                print("====================================\n",
+                      "invalid triangle: ", vertex_a, vertex_b, vertex_c,
+                  f"\n  slopes {slope_a}, {slope_b}",
+                  "=======================")
             return False
         return True
 

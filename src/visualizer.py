@@ -25,6 +25,8 @@ class Visualizer:
         while self.accumulator <= 0:
             try:
                 event = self.event_queue.get_nowait()
+                if config.visualizer_debug:
+                    print(event)
                 event(self)
                 self.accumulator = self.delay_min
             except queue.Empty:
@@ -100,8 +102,8 @@ class Visualizer:
         circle = VisualCircumcircle(triangle, vertex_inside=vertex_inside, color=color)
         triangle.circumcircle_key = f"{circle}"
         self.entities[circle.get_key()] = circle
-        if not vertex_inside and color is None:
-            self.event_queue.put_nowait(methodcaller("remove_circle", triangle))
+        # if not vertex_inside and color is None:
+            # self.event_queue.put_nowait(methodcaller("remove_circle", triangle))
 
     def remove_vertex(self, vertex):
         if not self.testing:
@@ -189,13 +191,28 @@ class Visualizer:
             y += line_height
         return text_surface
 
-    def clear_final_view(self, edges):
+    def clear_entities_by_type(self, vertices=False,
+                                     edges=False,
+                                     triangles=False,
+                                     circumcircles=False):
         to_remove = []
         for key, entity in self.entities.items():
-            if isinstance(entity, VisualCircumcircle) or isinstance(entity, VisualTriangle):
+            if (
+                vertices      * isinstance(entity, VisualVertex)    or \
+                edges         * isinstance(entity, VisualEdge)      or \
+                triangles     * isinstance(entity, VisualTriangle)  or \
+                circumcircles * isinstance(entity, VisualCircumcircle) \
+            ):
                 to_remove.append(key)
         for key in to_remove:
             self.entities.pop(key)
+
+    def method_to_queue(self, *args, **kwargs):
+        """don't fuck it up"""
+        self.event_queue.put(methodcaller(*args, **kwargs))
+
+    def clear_final_view(self, edges):
+        self.clear_entities_by_type(triangles=True, circumcircles=True)
         for edge in edges:
             self.new_edge(edge)
 
