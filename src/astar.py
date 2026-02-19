@@ -1,9 +1,7 @@
 import heapq
-from operator import methodcaller
 from math import sqrt
 import pygame
 import config
-from bowyer_watson import Vertex
 
 class AStar:
     def __init__(self, dungeon_mask, room_lookup, visualizer_queue=None):
