@@ -17,6 +17,9 @@ any_debug = circumcircle_debug or \
             problematic_point_debug or \
             visualizer_debug
 delay_visualisation = True
+freetype_compatibility_mode = True
+if freetype_compatibility_mode:
+    draw_coords = False
 
 viewport_x = 1200
 viewport_y = 700
@@ -80,7 +83,9 @@ draw_final_circumcircles = True
 
 player_speed = 20 * thickness
 
-helptext_test = "Q, Esc        Next exception\n" \
+helptext_test = "\n\n\n\n\n" \
+                "     F         Next step\n" \
+                "Q, Esc         Next exception\n" \
                 "Space         End visual checks\n"
 helptext      = "Esc, Q        Quit\n" \
                 "WASD        Move\n" \

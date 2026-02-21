@@ -1,11 +1,13 @@
 import sys
 from enum import Enum, auto
 import pygame
-import pygame.freetype
+
+import config
+if not config.freetype_compatibility_mode:
+    import pygame.freetype
 
 from dungeon import Dungeon
 from player import Player
-import config
 from bowyer_watson import BowyerWatson
 from visualizer import Visualizer
 from prims import prims
@@ -23,9 +25,12 @@ class Doomcrawl:
         if exceptions:
             self.visually_confirm_test_exceptions = True
         pygame.display.set_caption(title)
-        pygame.freetype.init()
-        self.font = pygame.freetype.Font(config.FONTFILE, config.thickness * 3)
-        self.help_surface = self.create_help_surface()
+        if not config.freetype_compatibility_mode:
+            pygame.freetype.init()
+            self.font = pygame.freetype.Font(config.FONTFILE, config.thickness * 3)
+            self.help_surface = self.create_help_surface()
+        else:
+            self.help_surface = pygame.Surface((1,1))
 
         if rooms:
             config.random_rooms = False
