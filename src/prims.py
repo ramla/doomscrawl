@@ -13,6 +13,8 @@ def prims(points, edges, start_at=None):
 
         start_at: optional node to start at
     """
+    if len(edges) < 1:
+        return []
     visited = set()
     mst_edges = []
     graph = Graph(points)
