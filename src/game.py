@@ -122,8 +122,12 @@ class Doomcrawl:
                         self.visualizer.method_to_queue("clear_final_view", self.bw.final_edges)
                         self.state_machine.set(GameState.CCS_CLEARED)
                     elif self.state_machine.get() == GameState.STEPPED:
-                        self.visualizer.method_to_queue("clear_entities_by_type", circumcircles=True)
-                        self.state_machine.set(GameState.STEP_CLEARED)
+                        self.visualizer.method_to_queue("clear_entities_by_type",
+                                                        circumcircles=True)
+                        if self.bw.ready:
+                            self.state_machine.set(GameState.TRIANGULATED)
+                        else:
+                            self.state_machine.set(GameState.STEP_CLEARED)
                     elif self.state_machine.get() == GameState.CCS_CLEARED:
                         self.pruned_edges = self.get_pruned_edges(self.bw.final_edges,
                                             start_at=self.dungeon.get_player_room_center())
