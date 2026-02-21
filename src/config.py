@@ -9,7 +9,6 @@ room_debug = False  #print room list to terminal when passing room centers to
 bw_debug = False
 problematic_point_debug = False
 visualizer_debug = False
-delay_visualisation = True
 random_rooms = True
 draw_coords = False
 any_debug = circumcircle_debug or \
