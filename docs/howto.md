@@ -20,12 +20,12 @@
 ## Command-Line Options:
 
 **PASS COMMAND-LINE OPTIONS WITH --args=""**, for example:
-`poetry run invoke start --args="-r '[(100,150), (600,300), (250,550)]'"`
+>`poetry run invoke start --args="-r '[(100,150), (600,300), (250,550)]'"`
 
 
-`-t, --no_freetype`
+**`-t, --no_freetype`**<br>
 Do not import pygame.freetype compatibility mode. Help text and coordinate rendering not available.
 
-`-r, --rooms=`
+**`-r, --rooms=`**<br>
 Give coordinates for room centers in Python list format. The rooms will be rendered with a small size of 70*70 pixels.
 > `-r [(10,10), (50,20)]`
