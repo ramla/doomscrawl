@@ -165,7 +165,7 @@ class TestBowyerWatson(unittest.TestCase):
 
     def test_random_4_points_iterated(self):
         its = 0
-        limit = 10**2
+        limit = 10**3
         exceptions = []
         while its < limit:
             its += 1
@@ -180,7 +180,7 @@ class TestBowyerWatson(unittest.TestCase):
         while visually_confim_test_exceptions and i < len(exceptions):
             title, point_set = exceptions[i]
             try:
-                app = Doomcrawl(zip(point_set, len(point_set)*[(40,40)]),
+                app = Doomcrawl(list(zip(point_set, len(point_set)*[(40,40)])),
                                 add_title=title, exceptions=True)
                 app.start()
             except SystemExit as e:
@@ -189,6 +189,31 @@ class TestBowyerWatson(unittest.TestCase):
             i += 1
 
     def random_4_points_tri_count(self):
+        """This magnificent beast tests triangle counts in triangulations handling relevant edge
+        cases. Visual confirmation is available for inspection in nontrivial cases.
+        
+        - All convex triangulations of 4 points should result in two triangles. Convex is determined
+        by checking whether any of the given points lie inside the triangle formed by the other
+        three.
+        
+        - When three points lie close enough to being on the same line, point may be detected
+        to lie within the triangle formed by other points but due to non-infinite distance to
+        supervertices the result of two triangles is still valid.
+
+        - In four points, one may be rejected due to hitting another triangle's circumcircle's
+        perimeter exactly enough => one triangle should be found.
+        
+        - Points location and order of triangulation may cause the sole edge
+        connecting one point to other triangulated points only forms triangles containing
+        supervertices, the edge will get removed in the end. For the use case this is handled by
+        checking for such edge when removing triangles. This case should result in one triangle
+        and four edges.
+
+        - If all points lie close to being on the same line, all triangles may be supervertex-
+        connected and be removed at the final phase. Again, this is handled and results in no
+        triangles but three edges.
+        """
+
         n = 4
         points = []
         min_coords = (random.randint(0,50), random.randint(0,50))
@@ -211,8 +236,8 @@ class TestBowyerWatson(unittest.TestCase):
                                 # times this assertation failed so far: 1
             return ("Point rejected due to being on circumcircle circumference", points)
         if len(bw.triangles) == 1:
-            # assuming points lie narrow or flat enough in x or y so that the sole edge
-            # connecting a point to other triangulated points only forms triangles containing
+            # points location and order of triangulation may cause the sole edge
+            # connecting a point to other triangulated points only form triangles containing
             # supervertices and gets removed in the end.
             # for the use case this is handled by checking for such edge when removing triangles
             # thus testing for the appropriate edge count instead
@@ -247,8 +272,8 @@ class TestBowyerWatson(unittest.TestCase):
                 print(f"FOURTH POINT OUTSIDE EXCEPTION: {points}")
                 print("Triangle count not 2 in what should be a convex triangulation of 4 points"
                     f"\nPoints: {points}")
-                # assuming points lie very close to a line (not checked for) so that the sole edge
-                # connecting a point to other triangulated points only forms triangles containing
+                # points location and order of triangulation may cause the sole edge
+                # connecting a point to other triangulated points to only form triangles containing
                 # supervertices and gets removed in the end.
                 # for the use case this is handled by checking for such edge when removing triangles
                 # thus testing for the appropriate edge count instead
@@ -258,6 +283,25 @@ class TestBowyerWatson(unittest.TestCase):
                 return (f"Fourth point outside but tri count: {len(bw.triangles)} (!= 2):", points)
         self.assertEqual(len(bw.triangles), 2,
                          f"Looks like there's another edge case I didn't consider: {points}")
+
+    def test_no_other_points_inside_circumcircles(self):
+        """Get vertices of all triangles, then check that none of the vertices that aren't the
+        triangle's own lie within the circumcircle."""
+        min_coords = (0, 0)
+        max_coords = (100, 100)
+        n = int(10**3)
+        self.bw.add_points(get_random_points_float(n, min_coords, max_coords))
+        self.bw.triangulate_all()
+        all_verts = set()
+        for triangle in self.bw.triangles.values():
+            all_verts.update(triangle.get_vertices())
+        self.assertEqual(n - len(self.bw.rejected_points), len(all_verts))
+        for triangle in self.bw.triangles.values():
+            tri_verts = set(triangle.get_vertices())
+            other_verts = all_verts - tri_verts
+            for vertex in other_verts:
+                self.assertFalse(triangle.vertex_in_circumcircle(vertex))
+
 
 class TestVisualization(unittest.TestCase):
     def setUp(self):
