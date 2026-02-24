@@ -17,7 +17,7 @@ any_debug = circumcircle_debug or \
             problematic_point_debug or \
             visualizer_debug
 delay_visualisation = True
-freetype_compatibility_mode = True
+freetype_compatibility_mode = False
 if freetype_compatibility_mode:
     draw_coords = False
 
