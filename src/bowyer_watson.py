@@ -117,7 +117,10 @@ class BowyerWatson:
                                       vertex_inside=new_vertex_in_circumcircle)
             if new_vertex_in_circumcircle:
                 self.handle_found_triangle(triangle, bad_triangles, new_vertex)
-                break
+                if self.point_pushed_back:
+                    return
+                else:
+                    break
         bad_tri_edgecount = {}
         for triangle in bad_triangles:
             for edge in triangle.get_edges():
