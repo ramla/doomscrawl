@@ -111,6 +111,7 @@ class BowyerWatson:
             try:
                 new_vertex_in_circumcircle = triangle.vertex_in_circumcircle(new_vertex)
             except ValueError:
+                # point was within 10**-9 of the perimeter of an existing circumcircle, no good
                 self.handle_vertex_in_circumcircle_value_error(new_vertex.get_coord())
                 return
             triangle.visualize_circle(self.visualizer_queue,
@@ -148,11 +149,7 @@ class BowyerWatson:
         for vertex in triangle.get_vertices():
             self.visualize_activate(vertex)
         bad_triangles.add(triangle)
-        for edge in triangle.get_edges():
-            if not edge.get_key() in self.edges:
-                self.edges[edge.get_key()] = edge
-            # self.visualize_new(edge, active=True, reset_active=True)
-            self.visualize_activate(triangle)
+        self.visualize_activate(triangle)
         # triangle.visualize_remove_circle(self.visualizer_queue)
         for edge in triangle.get_edges():
             for triangle_by_edge in self.triangles_with_edge[edge.get_key()]:
@@ -232,12 +229,13 @@ class BowyerWatson:
                            not edge.get_vertices()[1] in self.super_verts:
                             if edge in self.bounding_edges:
                                 # While removing the super-connected triangles we seem to be
-                                # removing both edges from between two triangulated points.
-                                # For our purposes it's probably best to keep it.
+                                # removing both triangles sharing an edge between two triangulated
+                                # points. For our purposes it's probably best to keep it.
                                 self.final_edges.add(edge)
                             self.bounding_edges.add(edge)
                     self.super_storage.append(triangle)
                     self.remove_triangle(triangle)
+                    break
 
     def restore_super_triangle(self):
         if config.bw_debug:
@@ -285,7 +283,6 @@ class BowyerWatson:
         if not triangle.get_key() in self.triangles:
             if config.bw_debug:
                 print(f"remove triangle: NOT FOUND {triangle}")
-            return triangle
         if config.bw_debug:
             for vert in self.super_verts:
                 if vert not in triangle.get_vertices():
