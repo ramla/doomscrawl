@@ -262,6 +262,7 @@ class BowyerWatson:
                                           color=config.color_circumcircle_final)
 
     def add_triangle(self, vertex_a, vertex_b, vertex_c):
+        vertex_a, vertex_b, vertex_c = sorted((vertex_a, vertex_b, vertex_c))
         triangle = Triangle(vertex_a, vertex_b, vertex_c, self.edges)
         self.triangles[triangle.get_key()] = triangle
         edges = (Edge(vertex_a, vertex_b),
