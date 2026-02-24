@@ -47,7 +47,7 @@ except getopt.error as err:
 
 n = 30
 # roomlocs = get_random_points_int(n, (100,100), (1100,600))
-# rooms = list(zip(roomlocs, [default_size]*len(roomlocs)))
+# rooms = list(zip(roomlocs, [DEFAULT_SIZE]*len(roomlocs)))
 
 # roomsizes = [Room.get_random_size("") for _ in range(len(roomlocs))]
 # rooms = list(zip(roomlocs, roomsizes))
