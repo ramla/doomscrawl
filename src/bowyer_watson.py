@@ -57,7 +57,7 @@ class BowyerWatson:
         """
         self.visualizer_queue = visualizer_queue
         self.points = []
-        self.rejected_points = []
+        self.rejected_points = set()
         self.next_points = deque()
         self.point_pushed_back = False
         self.point_tries = {}
@@ -354,13 +354,7 @@ class BowyerWatson:
 
     def reject_point(self, point):
         print(f"REJECTED {point}")
-        self.rejected_points.append(point)
-        triangles_to_delete = set()
-        for triangle in self.triangles.values():
-            if point in triangle.get_coords():
-                triangles_to_delete.add(triangle)
-        for triangle in triangles_to_delete:
-            self.remove_triangle(triangle)
+        self.rejected_points.add(point)
         self.visualize_remove(Vertex(point[0], point[1]))
 
 
