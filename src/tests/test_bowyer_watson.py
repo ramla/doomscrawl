@@ -302,6 +302,111 @@ class TestBowyerWatson(unittest.TestCase):
             for vertex in other_verts:
                 self.assertFalse(triangle.vertex_in_circumcircle(vertex))
 
+    def test_iterate_convex_triangulation_tri_count_test(self):
+        for _ in range(10*2):
+            self.random_n_points_convex_triangulation_tri_count()
+
+    def random_n_points_convex_triangulation_tri_count(self):
+        min_coords = (50, 50)
+        max_coords = (1150, 650)
+        n = random.randint(5,100)
+        convex_triangulation_found = False
+        while not convex_triangulation_found:
+            points = get_random_points_int(n, min_coords, max_coords)
+            bw = BowyerWatson(points=points)
+            bw.triangulate_all()
+            convex_triangulation_found, hull_points = self.is_convex_triangulation(bw.triangles)
+            final_points_in_triangulation = self.get_final_points_amount(bw.triangles)
+        self.assertEqual(len(bw.triangles), final_points_in_triangulation * 2 - hull_points - 2)
+
+    def test_is_convex_triangulation(self):
+        points = [(861, 527), (643, 223), (159, 539), (379, 531), (399, 221)]
+        # 379,531 stands slightly inside of what would be the hull of a convex triangulation, but
+        # this set of points triangulates concave, i.e. there is no edge 159,539 - 861,527
+        bw = BowyerWatson(points=points)
+        bw.triangulate_all()
+        is_convex, hull_points = self.is_convex_triangulation(bw.triangles)
+        self.assertFalse(is_convex)
+        self.assertEqual(hull_points, 5)
+
+    def is_convex_triangulation(self, tris):
+        bounding_edges = {}
+        for triangle in tris.values():
+            for edge in triangle.get_edges():
+                if edge.get_key() not in bounding_edges:
+                    bounding_edges[edge.get_key()] = edge
+                else:
+                    bounding_edges.pop(edge.get_key())
+        edges = list(bounding_edges.values())
+        starting_edge = edges[0]
+        a, b = starting_edge.get_coords()
+        i = 0
+        prev_direction = None
+        while i < len(edges):
+            next_edge = self.find_edge_with_coord_b_not_a(edges, a, b)
+            bb, c = next_edge.get_coords()
+            if c == b:
+                bb, c = c, bb
+            abx = b[0]-a[0]
+            aby = b[1]-a[1]
+            bcx = c[0]-b[0]
+            bcy = c[1]-b[1]
+            direction = abx*bcy - aby*bcx < 0
+            if prev_direction is None:
+                prev_direction = direction
+            if direction != prev_direction:
+                return False, len(edges)
+            a, b = b, c
+            i += 1
+        self.assertEqual(starting_edge.get_coords(), (a, c))
+        return True, len(edges)
+
+    def find_edge_with_coord_b_not_a(self, edges, a, b):
+        for edge in edges:
+            if b in edge.get_coords() and a not in edge.get_coords():
+                return edge
+        return None
+
+    def get_final_points_amount(self, triangulation):
+        verts = set()
+        for triangle in triangulation.values():
+            for vert in triangle.get_vertices():
+                verts.add(vert)
+        return len(verts)
+
+    def test_paper_comparison_case(self):
+        """A triangulation was made on paper according to how the algorithm should work, longer
+        explanation in Testing Report. Here we test that the exact triangles exist in the
+        considered cases and no extra triangles are found."""
+        super_triangle = [(-1100, -950), (-1100, 1700), (2400, 350)]
+        roomlocs = [(643, 223), (159, 539), (379, 531), (861, 527), (399, 221)]
+        bw = BowyerWatson(points=roomlocs, super_tri=super_triangle)
+        bw.triangulate_all()
+        roomverts = [Vertex(x, y) for x, y in roomlocs]
+        A, B, C, D, E = roomverts
+        paper_triangle_keys = [ Triangle(A, C, D, bw.edges).get_key(),
+                                Triangle(E, A, C, bw.edges).get_key(),
+                                Triangle(E, C, B, bw.edges).get_key()
+                            ]
+        self.assertEqual(len(paper_triangle_keys), len(bw.triangles))
+        for key in paper_triangle_keys:
+            self.assertIn(key, bw.triangles)
+
+        roomlocs = [(643, 223), (159, 539), (379, 531), (861, 527), (399, 221), (420, 400)]
+        bw = BowyerWatson(points=roomlocs, super_tri=super_triangle)
+        bw.triangulate_all()
+        roomverts = [Vertex(x, y) for x, y in roomlocs]
+        A, B, C, D, E, F = roomverts
+        paper_triangle_keys = [ Triangle(A, D, F, bw.edges).get_key(),
+                                Triangle(D, C, F, bw.edges).get_key(),
+                                Triangle(C, B, F, bw.edges).get_key(),
+                                Triangle(B, E, F, bw.edges).get_key(),
+                                Triangle(E, A, F, bw.edges).get_key(),
+                            ]
+        self.assertEqual(len(paper_triangle_keys), len(bw.triangles))
+        for key in paper_triangle_keys:
+            self.assertIn(key, bw.triangles)
+
 
 class TestVisualization(unittest.TestCase):
     def setUp(self):
@@ -342,6 +447,4 @@ class TestVisualization(unittest.TestCase):
         for triangle in self.bw.triangles.values():
             print(triangle.get_key())
         bw_result = [obj.get_key() for obj in self.bw.triangles.values()]
-        print("common objs:", set(bw_result) & set(vis_entities))
-        print("set_vis:", set(vis_entities))
         self.assertEqual(set(bw_result), set(vis_entities))

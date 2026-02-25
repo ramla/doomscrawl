@@ -14,7 +14,7 @@ from prims import prims
 
 
 class Doomcrawl:
-    def __init__(self, rooms=None, add_title=None, exceptions=False):
+    def __init__(self, rooms=None, add_title=None, exceptions=False, super_tri=None):
         pygame.init()
         self.viewport = pygame.display.set_mode((config.viewport_x,config.viewport_y),
                                                 pygame.RESIZABLE)
@@ -38,7 +38,7 @@ class Doomcrawl:
         self.dungeon = Dungeon((config.viewport_x, config.viewport_y), rooms, exceptions,
                                self.visualizer.event_queue)
         self.player = Player(self.dungeon.player_start_pos, (config.thickness, config.thickness))
-        self.bw = BowyerWatson(visualizer_queue=self.visualizer.event_queue)
+        self.bw = BowyerWatson(visualizer_queue=self.visualizer.event_queue, super_tri=super_tri)
         self.state_machine = StateMachine()
         self.running = True
         self.helping = True
@@ -80,6 +80,8 @@ class Doomcrawl:
                         if self.bw.ready and len(self.bw.next_points) == 0:
                             self.bw.add_points(self.dungeon.get_room_centers())
                         else:
+                            self.visualizer.method_to_queue("clear_entities_by_type",
+                                                            circumcircles=True)
                             self.bw.iterate_once()
                         if self.bw.ready:
                             self.state_machine.set(GameState.TRIANGULATED)
@@ -178,7 +180,7 @@ class Doomcrawl:
 
         if keys[pygame.K_q] or keys[pygame.K_ESCAPE]:
             self.running = False
-        if keys[pygame.K_SPACE]:
+        if keys[pygame.K_SPACE] and self.visually_confirm_test_exceptions:
             raise SystemExit(1)
 
     def create_help_surface(self):

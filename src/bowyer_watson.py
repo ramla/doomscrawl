@@ -46,7 +46,7 @@ class BowyerWatson:
         ready: when False, triangulation is ongoing
     """
 
-    def __init__(self, visualizer_queue=None, points=None):
+    def __init__(self, visualizer_queue=None, points=None, super_tri=None):
         """
         Parameters:
             visualizer_queue: An optional queue.Queue to put methodcaller objects in with a Vertex,
@@ -61,6 +61,7 @@ class BowyerWatson:
         self.next_points = deque()
         self.point_pushed_back = False
         self.point_tries = {}
+        self.super_tri_override = super_tri
         self.super_verts = None
         self.super_tri_key = None
         self.super_storage = []
@@ -82,10 +83,15 @@ class BowyerWatson:
         if config.any_debug:
             print(f"-----------\nadding points:\n{points}\n------------")
         if points and self.ready:
-            new_points = list(set(points) - set(self.points))
-            self.next_points.extend(new_points)
-            self.points += new_points
-            self.create_super_tri()
+            if self.super_tri_override:
+                self.points = points
+                self.next_points.extend(points)
+                self.use_given_super_tri()
+            else:
+                new_points = list(set(points) - set(self.points))
+                self.next_points.extend(new_points)
+                self.points += new_points
+                self.create_super_tri()
             self.ready = False
 
     def triangulate_point(self, point):
@@ -201,6 +207,16 @@ class BowyerWatson:
             self.super_tri_key = self.add_triangle(*self.super_verts)
         else:
             self.restore_super_triangle()
+
+    def use_given_super_tri(self):
+        self.super_verts = [ Vertex(point[0], point[1]) for point in self.super_tri_override ]
+        super_edges = ( Edge(self.super_verts[0], self.super_verts[1]),
+                        Edge(self.super_verts[1], self.super_verts[2]),
+                        Edge(self.super_verts[0], self.super_verts[2])
+                    )
+        for edge in super_edges:
+            self.edges[edge.get_key()] = edge
+        self.super_tri_key = self.add_triangle(*self.super_verts)
 
     def get_super_vertices(self):
         xs, ys = zip(*self.points)
