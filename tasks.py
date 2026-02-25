@@ -28,6 +28,14 @@ def start(ctx, args=""):
 
             Example:
                 -r [(10,10), (50,20)]
+        
+        -s, --super=
+            Give coordinates for custom super triangle in Python list format. Can
+            also be given as the only argument to launch relevant test case with
+            rooms A to F.
+
+            Example:
+                -s [(-1100, -950), (-1100, 1700), (2400, 350)]
 
     ====== KEYBINDS:
        Esc, Q  -  Quit
