@@ -12,7 +12,7 @@ rooms = None
 super_triangle = None
 
 args = sys.argv[1:]
-options = "tr:s"
+options = "tr:s:"
 long_options = ["no_freetype", "rooms=", "super="]
 try:
     arguments, values = getopt.getopt(args, options, long_options)
@@ -20,11 +20,11 @@ try:
         if currentArg in ("-t", "--no_freetype"):
             print("Running in freetype compatibility mode: help text and coordinate rendering disabled")
         elif currentArg in ("-r", "--rooms="):
-            roomlocs = ast.literal_eval(sys.argv[2])
+            roomlocs = ast.literal_eval(currentVal)
             rooms = list(zip(roomlocs, [DEFAULT_SIZE]*len(roomlocs)))
         elif currentArg in ("-s", "--super="):
             try:
-                super_triangle = ast.literal_eval(sys.argv[2])
+                super_triangle = ast.literal_eval(currentVal)
             except IndexError:
                 if super_triangle is None:
                     print("No points given for super triangle, using test case values")
