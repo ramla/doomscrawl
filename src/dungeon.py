@@ -45,7 +45,7 @@ class Dungeon:
         if center is not None:
             tries = 1
         elif fail_allowed:
-            tries = 10
+            tries = 30
         else:
             tries = 9999
 
@@ -53,7 +53,8 @@ class Dungeon:
             room = Room(size=size, pos=pos, center=center)
             if config.room_debug:
                 print(f"center {center}, size {room.size}, offset {room.offset}")
-            if (not self.collision_mask.overlap(room.mask, room.get_mask_offset())
+            if (not self.collision_mask.overlap(room.mask,
+                                                room.get_mask_offset(config.room_margin))
                 or self.ignore_collision
             ):
                 self.collision_surface.blit(room.surface, room.offset)
@@ -122,11 +123,15 @@ class Room(pygame.Rect):
         self.pop_timer = 0
         self.animation_copy = None
 
-        margin = config.thickness
-        self.mask = pygame.Mask((self.size[0]+2*margin, self.size[1]+2*margin), fill=True)
+        self.mask = self.get_mask_with_margin(config.room_margin)
 
         self.surface = pygame.Surface(self.size)
         self.surface.fill(config.color["col1"])
+
+    def get_mask_with_margin(self, margin):
+        return pygame.Mask((self.size[0]+2*margin,
+                           self.size[1]+2*margin),
+                           fill=True)
 
     def get_center(self):
         return self.center
@@ -146,10 +151,10 @@ class Room(pygame.Rect):
         return doors[3]
 
     def get_doors(self):
-        return (self.center[0], self.center[1]-self.size[1]/2-config.corridor_width/2), \
-               (self.center[0], self.center[1]+self.size[1]/2+config.corridor_width/2), \
-               (self.center[0]-self.size[0]/2-config.corridor_width/2, self.center[1]), \
-               (self.center[0]+self.size[0]/2+config.corridor_width/2, self.center[1])
+        return (self.center[0], self.center[1]-self.size[1]/2), \
+               (self.center[0], self.center[1]+self.size[1]/2), \
+               (self.center[0]-self.size[0]/2, self.center[1]), \
+               (self.center[0]+self.size[0]/2, self.center[1])
 
     def get_random_size(self):
         x = randint(config.room_size_min[0], config.room_size_max[0])
@@ -168,9 +173,9 @@ class Room(pygame.Rect):
         y = randint(config.thickness, config.viewport_y - config.thickness - self.size[1])
         return (x,y)
 
-    def get_mask_offset(self):
-        x = self.offset[0] - config.thickness
-        y = self.offset[1] - config.thickness
+    def get_mask_offset(self, margin):
+        x = self.offset[0] - margin
+        y = self.offset[1] - margin
         return (x,y)
 
     def anim_pop_init(self):
@@ -194,7 +199,11 @@ class Corridor:
         self.a, self.b = self.edge.get_coords()
 
         slope = edge.get_slope()
-        self.path, self.mask = astar.get_path(self.a, self.b, slope)
+        self.path = astar.get_path(self.a, self.b, slope)
+        self.mask = pygame.Mask((config.viewport_x, config.viewport_y))
+        corridor_space = pygame.Mask((config.corridor_width, config.corridor_width))
+        for pos in self.path:
+            self.mask.draw(corridor_space, pos)
 
     def get_mask(self):
         return self.mask
