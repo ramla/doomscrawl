@@ -133,7 +133,7 @@ class Doomcrawl:
                     elif self.state_machine.get() == GameState.CCS_CLEARED:
                         self.pruned_edges = self.get_pruned_edges(self.bw.final_edges,
                                             start_at=self.dungeon.get_player_room_center())
-                        # self.pruned_edges = self.bw.final_edges
+                        # self.pruned_edges = self.bw.final_edges # uncomment to keep all edges
                         self.visualizer.method_to_queue("redraw_edges", self.pruned_edges)
                         self.state_machine.set(GameState.PRUNED)
                     elif self.state_machine.get() == GameState.PRUNED:
