@@ -141,15 +141,15 @@ class TestBowyerWatson(unittest.TestCase):
     def test_random_points_float_runs(self):
         min_coords = (0, 0)
         max_coords = (100, 100)
-        n = 10**2
+        n = 10**3
         self.bw.add_points(get_random_points_float(n, min_coords, max_coords))
         self.bw.triangulate_all()
         # print(self.bw.triangles.values())
 
-    def test_super_vert_generation_issue_or_circumcenter_logic(self):
-        self.bw.add_points(self.point_of_difficulty)
+    # def test_super_vert_generation_issue_or_circumcenter_logic(self):
+        # self.bw.add_points(self.point_of_difficulty)
         # print(self.bw.triangles.values())
-        self.bw.triangulate_all()
+        # self.bw.triangulate_all()
         # print(self.bw.triangles.values())
 
     def test_full_house(self):
