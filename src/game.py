@@ -132,16 +132,25 @@ class Doomcrawl:
                         else:
                             self.state_machine.set(GameState.STEP_CLEARED)
                     elif self.state_machine.get() == GameState.CCS_CLEARED:
+                        # prioritise player location for start location of minimum spanning tree
+                        start_at = self.dungeon.get_player_room_center()
+                        # but if it's been rejected, shuffle another one
+                        if start_at in (self.bw.rejected_points | self.dungeon.rejected_rooms):
+                            start_at = choices(list(self.bw.final_edges),
+                                               k=1)[0].get_vertices()[0].get_coord()
+                            # also move the player so as not to keep them a prisoner in the void
+                            self.player.x, self.player.y = start_at
                         self.pruned_edges = set(self.get_pruned_edges(self.bw.final_edges,
-                                            start_at=self.dungeon.get_player_room_center()))
+                                            start_at=start_at))
+                        # proceed to shuffle an amount of edges back
                         n_extra_edges = int((len(self.bw.final_edges) -
                                              len(self.pruned_edges)) / 3)
                         self.pruned_edges = list(self.pruned_edges |
                                                  set(choices(list(self.bw.final_edges -
                                                              self.pruned_edges),
                                                              k=n_extra_edges)))
-                        # path shortest edges first to have shortcuts for the longer ones to
-                        # save compute
+                        # sort in ascending length order to path shortest edges first to have
+                        # existing shortcuts for the longer ones to save compute
                         self.pruned_edges.sort(key=lambda x: x.get_length())
                         self.visualizer.method_to_queue("redraw_edges", self.pruned_edges)
                         self.state_machine.set(GameState.PRUNED)

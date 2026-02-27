@@ -11,6 +11,7 @@ class Dungeon:
         self.init_texture()
         self.ignore_collision = exceptions
         self.rooms = {}
+        self.rejected_rooms = set()
         self.corridors = {}
         if rooms is None:
             self.add_room(fail_allowed=False)
@@ -65,6 +66,7 @@ class Dungeon:
             tries -= 1
         if config.room_debug or center is not None:
             print(f"Room creation failed (overlapping with existing): center {center}")
+            self.rejected_rooms.add(center)
 
     def get_room_centers(self):
         centers = []
