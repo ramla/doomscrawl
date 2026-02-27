@@ -100,9 +100,9 @@ class Dungeon:
             room.anim_pop_tick(viewport, frame_time)
             pygame.draw.rect(viewport, config.color_room, room)
         for corridor in self.corridors.values():
-            corridor_bitmap = corridor.get_mask().to_surface(setcolor=config.color_room,
-                                                    unsetcolor=(0, 0, 0, 0))
-            viewport.blit(corridor_bitmap, (0, 0))
+            if corridor.bitmap is None:
+                corridor.create_bitmap()
+            viewport.blit(corridor.bitmap, (0, 0))
 
 
 class Room(pygame.Rect):
@@ -200,6 +200,7 @@ class Corridor:
     def __init__(self, edge, astar):
         self.edge = edge
         self.a, self.b = self.edge.get_coords()
+        self.bitmap = None
 
         slope = edge.get_slope()
         self.path = astar.get_path(self.a, self.b, slope)
@@ -210,3 +211,7 @@ class Corridor:
 
     def get_mask(self):
         return self.mask
+
+    def create_bitmap(self):
+        self.bitmap = self.get_mask().to_surface(setcolor=config.color_room,
+                                                unsetcolor=(0, 0, 0, 0))
