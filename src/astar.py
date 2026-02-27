@@ -25,20 +25,18 @@ class AStar:
                 xy_px = self.centerify((x*config.corridor_width, y*config.corridor_width))
                 overlaps_room = bool(self.rooms_mask.overlap(self.space,
                                                              xy_px))
-                occupied = 10 if overlaps_room else 1
+                occupied = float("inf") if overlaps_room else config.astar_step_cost
                 self.grid[y].append(occupied)
 
     def get_path(self, a, b, slope):
         if self.grid is None:
             self.update_rooms_mask()
             self.gridify()
-        start, start_dir, goal, finish_dir = self.do_the_door_spaghetti(a, b, slope)
-        candidates = []
+        start_tiles, goal_tiles = self.do_the_door_spaghetti(a, b, slope)
+        start, goal = start_tiles[-1], goal_tiles[-1]
         visited = {} # position: (cost, previous)
-        queue = [] # (cost+estimate, cost, position)
-        best_cost = float("inf")
+        queue = [] # (cost+estimate, cost, iterator[to avoid sorting by position], position, prev_position)
         estimate = self.manhattan(start,goal)
-        halfway = self.get_halfway(start,goal)
         if self.visualizer_queue and config.astar_debug:
             px_goal, px_start = self.get_centerified_px_pos(goal), \
                                 self.get_centerified_px_pos(start)
@@ -51,54 +49,38 @@ class AStar:
                                                         px_start[1]),
                                                 active=True, reset_active=False))
         pos = None
-        heapq.heappush(queue, (estimate, 0, start, (-1, -1)))
-        while queue and len(candidates) < 3:
+        heapq.heappush(queue, (estimate, 0, self.iters, start, (-1, -1)))
+        while queue:
             self.iters += 1
-            estimate, cost, pos, previous = heapq.heappop(queue)
-            if estimate > best_cost:
-                print("let's not go here?")
+            estimate, cost, _, pos, previous = heapq.heappop(queue)
+            prev_cost, _ = visited.get(pos, (float("inf"), None)) 
+            if prev_cost <= cost:
                 continue
-            if pos in visited:
-                if cost < visited[pos][0]:
-                    print("this surely isn't happening at least until combined corridors")
-                else:
-                    continue
             visited[pos] = (cost, previous)
+            if pos == goal:
+                break
             if self.visualizer_queue and config.astar_debug:
                 px_pos = self.get_px_pos(pos)
                 self.visualizer_queue.put(methodcaller("new_vertex",
                                                        Vertex(px_pos[0], px_pos[1]),
                                                        active=False, reset_active=False))
-            for neighbor, estimate in self.weighed_neighbors(pos, halfway, goal,
-                                                             start_dir, finish_dir):
-                if neighbor == goal:
-                    new_cost = cost + self.grid[neighbor[1]][neighbor[0]]
-                    visited[neighbor] = (new_cost, pos)
-                    candidates.append((new_cost, neighbor))
-                    print(cost, new_cost, best_cost, "costs")
-                    best_cost = min(new_cost, best_cost)
-                    queue = []
-                    continue
+            for neighbor in self.neighbors(pos):
+                estimate = self.manhattan(neighbor, goal)
                 new_cost = cost + self.grid[neighbor[1]][neighbor[0]]
-                heapq.heappush(queue, (new_cost + estimate, new_cost, neighbor, pos))
+                heapq.heappush(queue, (new_cost + estimate, new_cost, self.iters, neighbor, pos))
                 self.calcs += 1
-        candidates.sort()
-        print(candidates)
         print(self.calcs,"calculations done",self.iters,"loop iterations")
-        pos = candidates[0][1]
-        path = []
+        path = [self.get_px_pos(pos) for pos in start_tiles+goal_tiles]
         while pos != start:
             print(visited[pos])
-            self.grid[pos[1]][pos[0]] = 0
+            self.grid[pos[1]][pos[0]] = config.astar_corridor_cost
             px_pos = self.get_px_pos(pos)
             path.append(px_pos)
-            if self.visualizer_queue and config.astar_debug:
-                self.visualizer_queue.put(methodcaller("new_vertex", Vertex(px_pos[0], px_pos[1]),
-                                                       active=True, reset_active=False))
             _, pos = visited[pos]
-        path.append(start)
-        self.visualizer_queue.put(methodcaller("new_vertex", Vertex(*self.get_px_pos(start)),
-                                                active=True, reset_active=False))
+        if config.astar_debug:
+            for pos in path:
+                self.visualizer_queue.put(methodcaller("new_vertex", Vertex(*pos),
+                                                        active=True, reset_active=False))
         return path
 
     def get_halfway(self, a, b):
@@ -107,25 +89,29 @@ class AStar:
     def do_the_door_spaghetti(self, a, b, slope):
         a_door, a_dir = self.room_lookup[a].get_door(slope)
         b_door, b_dir = self.room_lookup[b].get_door(slope, b_room=True)
+        for pos in [a_door, b_door]:
+            self.visualizer_queue.put(methodcaller("new_vertex", Vertex(*pos),
+                                                    active=False, reset_active=False))
         a_aligned, b_aligned = (self.align_to_grid(a_door[0], a_dir[0]),
                                 self.align_to_grid(a_door[1], a_dir[1])), \
                                (self.align_to_grid(b_door[0], b_dir[0]),
                                 self.align_to_grid(b_door[1], b_dir[1]))
-        a_final, b_final = self.extend_doors(a_aligned, a_dir, b_aligned, b_dir)
-        return a_final, a_dir, b_final, (b_dir[0]*-1, b_dir[1]*-1)
+        return self.extend_doors(a_aligned, a_dir, b_aligned, b_dir)
 
     def extend_doors(self, a, a_dir, b, b_dir):
-        points_to_draw = []
-        while self.grid[a[1]][a[0]] > 1:
-            points_to_draw.append(a)
+        a_tiles, b_tiles = [a], [b]
+        while self.grid[a[1]][a[0]] > config.astar_step_cost:
+            self.grid[a[1]][a[0]] = 1
             a = a[0] + a_dir[0], a[1] - a_dir[1]
-        while self.grid[b[1]][b[0]] > 1:
-            points_to_draw.append(b)
+            a_tiles.append(a)
+        while self.grid[b[1]][b[0]] > config.astar_step_cost:
+            self.grid[b[1]][b[0]] = 1
             b = b[0] + b_dir[0], b[1] - b_dir[1]
-        for point in points_to_draw:
+            b_tiles.append(b)
+        for point in a_tiles+b_tiles:
             point_px = self.get_px_pos(point)
             self.corridor_mask_cumulative.draw(self.space, self.centerify(point_px))
-        return a, b
+        return a_tiles, b_tiles
 
     def align_to_grid(self, value, direction):
         scaled = value/config.corridor_width

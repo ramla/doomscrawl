@@ -68,6 +68,10 @@ vertex_radius = thickness/3
 edge_width = thickness/5
 triangle_width = thickness/5
 
+astar_step_cost = 1   # larger default step cost results in more area explored and thus
+                        # more connected corridors at the cost of more compute
+astar_corridor_cost = 0.5 # value <1 results in an inadmissible heuristic
+
 vertex_anim_duration = 1/60
 if delay_visualisation:
     vertex_anim_duration = 0.3

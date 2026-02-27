@@ -19,7 +19,7 @@ class Dungeon:
             self.player_start_pos = rooms[0][0]
             for room in rooms:
                 self.add_room(center=room[0], size=room[1])
-        self.astar = AStar(self.collision_mask, self.rooms, visualizer_queue=visualizer_queue)
+        self.astar = AStar(self.rooms, visualizer_queue=visualizer_queue)
 
     def init_collision_surface(self):
         self.collision_surface = pygame.Surface((self.screen_size[0], self.screen_size[1]))
@@ -152,10 +152,10 @@ class Room(pygame.Rect):
         return doors[3], (delta,0)
 
     def get_doors(self):
-        return (self.center[0], self.center[1]-self.size[1]/2), \
-               (self.center[0], self.center[1]+self.size[1]/2), \
-               (self.center[0]-self.size[0]/2, self.center[1]), \
-               (self.center[0]+self.size[0]/2, self.center[1])
+        return (self.center[0], self.center[1]-self.size[1]/3), \
+               (self.center[0], self.center[1]+self.size[1]/3), \
+               (self.center[0]-self.size[0]/3, self.center[1]), \
+               (self.center[0]+self.size[0]/3, self.center[1])
 
     def get_random_size(self):
         x = randint(config.room_size_min[0], config.room_size_max[0])
@@ -202,7 +202,7 @@ class Corridor:
         slope = edge.get_slope()
         self.path = astar.get_path(self.a, self.b, slope)
         self.mask = pygame.Mask((config.viewport_x, config.viewport_y))
-        corridor_space = pygame.Mask((config.corridor_width, config.corridor_width))
+        corridor_space = pygame.Mask((config.corridor_width, config.corridor_width), fill=True)
         for pos in self.path:
             self.mask.draw(corridor_space, pos)
 
