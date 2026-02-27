@@ -29,7 +29,7 @@ any_debug = circumcircle_debug or \
             problematic_point_debug or \
             visualizer_debug or \
             astar_debug
-delay_visualisation = True
+delay_visualisation = True # toggle with key 1 ingame
 freetype_compatibility_mode = False # enable if pygame.freetype disagrees with your system
 if freetype_compatibility_mode or astar_debug:
     draw_coords = False

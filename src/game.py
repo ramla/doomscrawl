@@ -160,6 +160,8 @@ class Doomcrawl:
                     elif self.state_machine.get() == GameState.CONNECTED:
                         #clear corridors here?
                         self.state_machine.set(GameState.READY)
+                if event.key == pygame.K_1:
+                    config.delay_visualisation = not config.delay_visualisation
                 if event.key == pygame.K_0:
                     config.collision_debug = not config.collision_debug
             if event.type == config.POINT_REJECTED:
