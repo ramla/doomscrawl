@@ -80,8 +80,7 @@ class BowyerWatson:
         Parameters:
             points: a list of tuples of x and y coordinates
         """
-        if config.any_debug:
-            print(f"-----------\nadding points:\n{points}\n------------")
+        print(f"-----------\nadding points:\n{points}\n------------")
         if points and self.ready:
             if self.super_tri_override:
                 self.points = points
@@ -352,15 +351,16 @@ class BowyerWatson:
                                                        bw_object, reset_active))
 
     def is_valid_triangle(self, vertex_a, vertex_b, vertex_c):
-        two_or_more_same_points = vertex_a == vertex_b \
-                               or vertex_b == vertex_c \
-                               or vertex_a == vertex_c
+        # two_or_more_same_points = vertex_a == vertex_b \ # commenting this out as verts are added
+        #                        or vertex_b == vertex_c \ # thru set now
+        #                        or vertex_a == vertex_c
         edge_a, edge_b = Edge(vertex_a, vertex_b), Edge(vertex_b, vertex_c)
         slope_a, slope_b = edge_a.get_slope(), edge_b.get_slope()
-        if two_or_more_same_points or slope_a == slope_b:
-            if config.any_debug:
+        # if two_or_more_same_points or slope_a == slope_b:
+        if slope_a == slope_b:
+            if config.bw_debug:
                 print("====================================\n",
-                      "invalid triangle: ", vertex_a, vertex_b, vertex_c,
+                    #   "invalid triangle: ", vertex_a, vertex_b, vertex_c,
                   f"\n  slopes {slope_a}, {slope_b}",
                   "=======================")
             return False
