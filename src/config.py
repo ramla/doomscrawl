@@ -70,9 +70,9 @@ edge_width = thickness/5
 triangle_width = thickness/5
 
                           # Heuristic is always calculated at cost of 1 per step.
-astar_step_cost = 1       # Larger default step cost results in more area explored and thus
+astar_step_cost = 1.4     # Larger default step cost results in more area explored and thus
                           # (possibly) more connected corridors at the cost of more compute.
-astar_corridor_cost = 0.5 # Value <1 here results in an inadmissible heuristic - saves
+astar_corridor_cost = 1   # Value <1 here results in an inadmissible heuristic - saves
                           # on compute with the compromise of maybe not finding the best
                           # path
 
