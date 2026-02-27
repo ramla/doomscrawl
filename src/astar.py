@@ -1,24 +1,46 @@
 import heapq
-from math import sqrt, floor, ceil
+from math import floor, ceil
 from operator import methodcaller
 import pygame
 import config
 from bowyer_watson import Vertex
 
 class AStar:
+    """ A* adaptation to find paths between rooms located on a fine coordinate system by
+    abstracting the rooms to a grid first.
+
+    Attributes:
+        space: Using this corridor square sized mask to create the grid we operate A* in
+
+        grid: The grid we operate A* in
+
+        rooms_mask: Screen sized mask where rooms are added in place with their added corridor
+            margin. Used with space to create grid.
+
+        calcs: Number of estimate calculations done, or numbe rof queue items added. Cumulative
+            for all of the corridor generations.
+
+        iters: Number of loop iterations, or number of items picked from queue to process.
+            Cumulative for all of the corridor generations.
+    """
     def __init__(self, room_lookup, visualizer_queue=None):
+        """Parameters:
+            room_lookup: dictionary to find room objects in by their center coordinate
+
+            visualizer_queue: optional visualizer queue for debug or to show area explored by
+                A*
+        """
         self.room_lookup = room_lookup
         self.visualizer_queue = visualizer_queue
         self.space = pygame.Mask((config.corridor_width, config.corridor_width), fill=True)
         self.grid = None
         self.rooms_mask = pygame.Mask((config.viewport_x, config.viewport_y))
-        self.goals, self.goal_mask = None, None
-        self.corridor_mask_cumulative = pygame.Mask((config.viewport_x, config.viewport_y))
         self.calcs = 0
         self.iters = 0
 
     def gridify(self):
-        self.grid = [] #map of costs
+        """Creating the grid to operate A* in. A total bodge."""
+        self.grid = []
         for y in range(int(config.viewport_y/config.corridor_width)):
             self.grid.append([])
             for x in range(int(config.viewport_x/config.corridor_width)):
@@ -29,13 +51,14 @@ class AStar:
                 self.grid[y].append(occupied)
 
     def get_path(self, a, b, slope):
+        """The thick of the meat"""
         if self.grid is None:
             self.update_rooms_mask()
             self.gridify()
         start_tiles, goal_tiles = self.do_the_door_spaghetti(a, b, slope)
         start, goal = start_tiles[-1], goal_tiles[-1]
         visited = {} # position: (cost, previous)
-        queue = [] # (cost+estimate, cost, iterator[to avoid sorting by position], position, prev_position)
+        queue = [] # (cost+estimate, cost, iterator[to avoid sorting by position], pos, prev_pos)
         estimate = self.manhattan(start,goal)
         if self.visualizer_queue and config.astar_debug:
             px_goal, px_start = self.get_centerified_px_pos(goal), \
@@ -53,7 +76,7 @@ class AStar:
         while queue:
             self.iters += 1
             estimate, cost, _, pos, previous = heapq.heappop(queue)
-            prev_cost, _ = visited.get(pos, (float("inf"), None)) 
+            prev_cost, _ = visited.get(pos, (float("inf"), None))
             if prev_cost <= cost:
                 continue
             visited[pos] = (cost, previous)
@@ -69,10 +92,11 @@ class AStar:
                 new_cost = cost + self.grid[neighbor[1]][neighbor[0]]
                 heapq.heappush(queue, (new_cost + estimate, new_cost, self.iters, neighbor, pos))
                 self.calcs += 1
-        print(self.calcs,"calculations done",self.iters,"loop iterations")
-        path = [self.get_px_pos(pos) for pos in start_tiles+goal_tiles]
+        print(f"A* corridor {a}-{b} done, cumulative {self.calcs} calculations " \
+              f"{self.iters} loop iterations")
+        path = [self.get_px_pos(pos) for pos in start_tiles+goal_tiles] # include extension of door
+                                                                    # to path (gridification hack)
         while pos != start:
-            print(visited[pos])
             self.grid[pos[1]][pos[0]] = config.astar_corridor_cost
             px_pos = self.get_px_pos(pos)
             path.append(px_pos)
@@ -83,15 +107,20 @@ class AStar:
                                                         active=True, reset_active=False))
         return path
 
-    def get_halfway(self, a, b):
-        return abs(a[0]-b[0])//2, abs(a[1]-b[1])//2
-
     def do_the_door_spaghetti(self, a, b, slope):
+        """This mess fetches proto-doors that are certain to be located inside the room even in the
+        hack of a grid-adaptation, but not meet in the middle altogether to avoid corridors pathing
+        through rooms.
+            The proto-doors are then snapped to grid and extended outward so that they lie outside
+        the room-corridor margins applied in the grid.
+            All of the positions are returned so that they can be included in the path so that the
+        corridors visually connect to the room as well."""
         a_door, a_dir = self.room_lookup[a].get_door(slope)
         b_door, b_dir = self.room_lookup[b].get_door(slope, b_room=True)
-        for pos in [a_door, b_door]:
-            self.visualizer_queue.put(methodcaller("new_vertex", Vertex(*pos),
-                                                    active=False, reset_active=False))
+        if config.astar_debug:
+            for pos in [a_door, b_door]:
+                self.visualizer_queue.put(methodcaller("new_vertex", Vertex(*pos),
+                                                        active=False, reset_active=False))
         a_aligned, b_aligned = (self.align_to_grid(a_door[0], a_dir[0]),
                                 self.align_to_grid(a_door[1], a_dir[1])), \
                                (self.align_to_grid(b_door[0], b_dir[0]),
@@ -99,6 +128,8 @@ class AStar:
         return self.extend_doors(a_aligned, a_dir, b_aligned, b_dir)
 
     def extend_doors(self, a, a_dir, b, b_dir):
+        """Function that takes proto-door locations and extends them to a position with
+        non-infinite cost."""
         a_tiles, b_tiles = [a], [b]
         while self.grid[a[1]][a[0]] > config.astar_step_cost:
             self.grid[a[1]][a[0]] = 1
@@ -108,12 +139,15 @@ class AStar:
             self.grid[b[1]][b[0]] = 1
             b = b[0] + b_dir[0], b[1] - b_dir[1]
             b_tiles.append(b)
-        for point in a_tiles+b_tiles:
-            point_px = self.get_px_pos(point)
-            self.corridor_mask_cumulative.draw(self.space, self.centerify(point_px))
+        if config.astar_debug:
+            for point in a_tiles+b_tiles:
+                point_px = self.get_px_pos(point)
+                self.corridor_mask_cumulative.draw(self.space, self.centerify(point_px))
         return a_tiles, b_tiles
 
     def align_to_grid(self, value, direction):
+        """Snaps [a proto-door] location to lie toward the inside of the room rather than toward
+        the outside of it to reduce visual glitches"""
         scaled = value/config.corridor_width
         if direction > 0:
             return ceil(scaled)
@@ -122,11 +156,8 @@ class AStar:
         else:
             return round(scaled)
 
-    def get_grid_pos(self, free_pos):
-        return (int(round(free_pos[0] / config.corridor_width)),
-                int(round(free_pos[1] / config.corridor_width)))
-
     def neighbors(self, pos):
+        """Returns list of neighboring positions that lie within the grid"""
         neighbors = [(pos[0]+1, pos[1]),
                      (pos[0]-1, pos[1]),
                      (pos[0], pos[1]+1),
@@ -137,44 +168,11 @@ class AStar:
                 valid_neighbors.append(neigh)
         return valid_neighbors
 
-    def weighed_neighbors(self, pos, halfway, goal, start_dir, finish_dir):
-        xy_progress = abs(pos[0]-goal[0]), abs(pos[1]-goal[1])
-        halfway_reached = xy_progress[0] - halfway[0] > 0 or xy_progress[1] - halfway[1] >= 0
-        weights = 4 * [0.5 - 1 * halfway_reached]
-        dirs = [(1,0), (0,1), (-1,0), (0,-1)]
-        if halfway_reached:
-            weights[dirs.index(finish_dir)] *= -1
-            weights[dirs.index((finish_dir[0]*-1, finish_dir[1]*-1))] *= -1
-            print("halfway",weights)
-        else:
-            weights[dirs.index(start_dir)] *= -1
-        neighbors = [(pos[0]+1, pos[1]),
-                     (pos[0], pos[1]+1),
-                     (pos[0]-1, pos[1]),
-                     (pos[0], pos[1]-1)]
-        valid_neighbors = []
-        for i in range(4):
-            neigh = neighbors[i]
-            if 0 <= neigh[0] < len(self.grid[0]) and 0 <= neigh[1] < len(self.grid):
-                estimate = self.manhattan(neigh, goal) + weights[i]
-                valid_neighbors.append((neigh, estimate))
-        return valid_neighbors
-
-    def euclidean(self, a, b):
-        return sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
-
     def manhattan(self, a, b):
         return abs(a[0]-b[0]) + abs(a[1]-b[1])
 
-    def is_valid_position(self, pos):
-        overlap, reached = self.rooms_mask.overlap(self.space, pos), self.goal_reached(pos)
-        return not overlap or reached
-
-    def goal_reached(self, pos):
-        reached = self.goal_mask.overlap(self.space, pos)
-        return reached
-
     def draw_collision_overlay(self, viewport):
+        """debug overlay function"""
         overlay = self.corridor_mask_cumulative.to_surface(setcolor=(200, 0, 0, 100),
                                                        unsetcolor=(0, 0, 0, 0))
         overlay2 = self.rooms_mask.to_surface(setcolor=(0,0,170,127),
@@ -183,17 +181,22 @@ class AStar:
         viewport.blit(overlay2, (0,0))
 
     def centerify(self, point, positive_delta=False):
+        """Nudge a pixel coordinate up left or down right by half corridor width"""
         if positive_delta:
             return point[0]+config.corridor_width/2, point[1]+config.corridor_width/2
         return point[0]-config.corridor_width/2, point[1]-config.corridor_width/2
 
     def get_px_pos(self, pos):
+        """Convert grid position to a top left corner pixel position"""
         return pos[0] * config.corridor_width, pos[1] * config.corridor_width
 
     def get_centerified_px_pos(self, pos, positive_delta=False):
+        """Convert a grid position to a centered pixel position"""
         return self.centerify(self.get_px_pos(pos), positive_delta=positive_delta)
 
     def update_rooms_mask(self):
+        """Fetches and stamps room masks extended with corridor margin to a single
+        mask for use in grid generation"""
         for room in self.room_lookup.values():
-            self.rooms_mask.draw(room.get_mask_with_margin(config.corridor_width/2),
-                                 room.get_mask_offset(config.corridor_width/2))
+            self.rooms_mask.draw(room.get_mask_with_margin(config.room_corridor_margin),
+                                 room.get_mask_offset(config.room_corridor_margin))
