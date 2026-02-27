@@ -57,20 +57,24 @@ color_circumcircle_final = color["col3"]
 
 FONTFILE = "assets/WarsawGothic-BnBV.otf"
 
-thickness = min(viewport_x, viewport_y) // 40
+thickness = min(viewport_x, viewport_y) // 45
 
 room_size_min = (thickness*3, thickness*3)
-room_size_max = (viewport_x//4, viewport_y//3)
-room_margin = thickness*3
+room_size_max = (viewport_x//5, viewport_y//4)
+room_margin = thickness*3.6
 corridor_width = thickness
+room_corridor_margin = corridor_width * 0.75
 
 vertex_radius = thickness/3
 edge_width = thickness/5
 triangle_width = thickness/5
 
-astar_step_cost = 1   # larger default step cost results in more area explored and thus
-                        # more connected corridors at the cost of more compute
-astar_corridor_cost = 0.5 # value <1 results in an inadmissible heuristic
+                          # Heuristic is always calculated at cost of 1 per step.
+astar_step_cost = 1       # Larger default step cost results in more area explored and thus
+                          # (possibly) more connected corridors at the cost of more compute.
+astar_corridor_cost = 0.5 # Value <1 here results in an inadmissible heuristic - saves
+                          # on compute with the compromise of maybe not finding the best
+                          # path
 
 vertex_anim_duration = 1/60
 if delay_visualisation:
