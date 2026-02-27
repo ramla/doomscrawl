@@ -1,17 +1,16 @@
 import heapq
-from math import sqrt, floor, ceil, log
+from math import sqrt, floor, ceil
+from operator import methodcaller
 import pygame
 import config
-from operator import methodcaller
 from bowyer_watson import Vertex
 
 class AStar:
-    def __init__(self, dungeon_mask, room_lookup, visualizer_queue=None):
+    def __init__(self, room_lookup, visualizer_queue=None):
         self.room_lookup = room_lookup
         self.visualizer_queue = visualizer_queue
         self.space = pygame.Mask((config.corridor_width, config.corridor_width), fill=True)
         self.grid = None
-        # self.dungeon_mask = dungeon_mask
         self.rooms_mask = pygame.Mask((config.viewport_x, config.viewport_y))
         self.goals, self.goal_mask = None, None
         self.corridor_mask_cumulative = pygame.Mask((config.viewport_x, config.viewport_y))
@@ -23,9 +22,9 @@ class AStar:
         for y in range(int(config.viewport_y/config.corridor_width)):
             self.grid.append([])
             for x in range(int(config.viewport_x/config.corridor_width)):
+                xy_px = self.centerify((x*config.corridor_width, y*config.corridor_width))
                 overlaps_room = bool(self.rooms_mask.overlap(self.space,
-                                                             (x*config.corridor_width,
-                                                              y*config.corridor_width)))
+                                                             xy_px))
                 occupied = 10 if overlaps_room else 1
                 self.grid[y].append(occupied)
 
@@ -35,15 +34,14 @@ class AStar:
             self.gridify()
         start, start_dir, goal, finish_dir = self.do_the_door_spaghetti(a, b, slope)
         candidates = []
-        # visited = { start: (-1, (-1, -1)) }
         visited = {} # position: (cost, previous)
         queue = [] # (cost+estimate, cost, position)
         best_cost = float("inf")
         estimate = self.manhattan(start,goal)
         halfway = self.get_halfway(start,goal)
-        #pitää tehä halfway x halfway y!!!!!!!!!!
-        if self.visualizer_queue:
-            px_goal, px_start = self.get_px_pos(goal), self.get_px_pos(start)
+        if self.visualizer_queue and config.astar_debug:
+            px_goal, px_start = self.get_centerified_px_pos(goal), \
+                                self.get_centerified_px_pos(start)
             self.visualizer_queue.put(methodcaller("new_vertex",
                                                 Vertex(px_goal[0],
                                                         px_goal[1]),
@@ -54,7 +52,7 @@ class AStar:
                                                 active=True, reset_active=False))
         pos = None
         heapq.heappush(queue, (estimate, 0, start, (-1, -1)))
-        while queue:
+        while queue and len(candidates) < 3:
             self.iters += 1
             estimate, cost, pos, previous = heapq.heappop(queue)
             if estimate > best_cost:
@@ -66,19 +64,21 @@ class AStar:
                 else:
                     continue
             visited[pos] = (cost, previous)
-            if self.visualizer_queue:
-                px_pos = self.get_centerified_px_pos(pos)
-                if config.astar_debug:
-                    self.visualizer_queue.put(methodcaller("new_vertex",
-                                                           Vertex(px_pos[0], px_pos[1]),
-                                                           active=False, reset_active=False))
+            if self.visualizer_queue and config.astar_debug:
+                px_pos = self.get_px_pos(pos)
+                self.visualizer_queue.put(methodcaller("new_vertex",
+                                                       Vertex(px_pos[0], px_pos[1]),
+                                                       active=False, reset_active=False))
             for neighbor, estimate in self.weighed_neighbors(pos, halfway, goal,
                                                              start_dir, finish_dir):
                 if neighbor == goal:
-                    candidates.append((cost, pos))
-                    visited[neighbor] = (cost, pos)
-                    best_cost = cost
-                    # queue = []
+                    new_cost = cost + self.grid[neighbor[1]][neighbor[0]]
+                    visited[neighbor] = (new_cost, pos)
+                    candidates.append((new_cost, neighbor))
+                    print(cost, new_cost, best_cost, "costs")
+                    best_cost = min(new_cost, best_cost)
+                    queue = []
+                    continue
                 new_cost = cost + self.grid[neighbor[1]][neighbor[0]]
                 heapq.heappush(queue, (new_cost + estimate, new_cost, neighbor, pos))
                 self.calcs += 1
@@ -89,14 +89,16 @@ class AStar:
         path = []
         while pos != start:
             print(visited[pos])
-            # self.grid[pos[1]][pos[0]] = 0
+            self.grid[pos[1]][pos[0]] = 0
             px_pos = self.get_px_pos(pos)
             path.append(px_pos)
-            if self.visualizer_queue:
+            if self.visualizer_queue and config.astar_debug:
                 self.visualizer_queue.put(methodcaller("new_vertex", Vertex(px_pos[0], px_pos[1]),
                                                        active=True, reset_active=False))
             _, pos = visited[pos]
         path.append(start)
+        self.visualizer_queue.put(methodcaller("new_vertex", Vertex(*self.get_px_pos(start)),
+                                                active=True, reset_active=False))
         return path
 
     def get_halfway(self, a, b):
@@ -114,12 +116,12 @@ class AStar:
 
     def extend_doors(self, a, a_dir, b, b_dir):
         points_to_draw = []
-        while self.rooms_mask.overlap(self.space, a):
+        while self.grid[a[1]][a[0]] > 1:
             points_to_draw.append(a)
-            a = a[0] + a_dir[0], a[1] + a_dir[1]
-        while self.rooms_mask.overlap(self.space, b):
+            a = a[0] + a_dir[0], a[1] - a_dir[1]
+        while self.grid[b[1]][b[0]] > 1:
             points_to_draw.append(b)
-            b = b[0] + b_dir[0], b[1] + b_dir[1]
+            b = b[0] + b_dir[0], b[1] - b_dir[1]
         for point in points_to_draw:
             point_px = self.get_px_pos(point)
             self.corridor_mask_cumulative.draw(self.space, self.centerify(point_px))
@@ -151,12 +153,13 @@ class AStar:
 
     def weighed_neighbors(self, pos, halfway, goal, start_dir, finish_dir):
         xy_progress = abs(pos[0]-goal[0]), abs(pos[1]-goal[1])
-        halfway_reached = xy_progress[0] - halfway[0] > 0 or xy_progress[1] - halfway[1] > 0
+        halfway_reached = xy_progress[0] - halfway[0] > 0 or xy_progress[1] - halfway[1] >= 0
         weights = 4 * [0.5 - 1 * halfway_reached]
         dirs = [(1,0), (0,1), (-1,0), (0,-1)]
         if halfway_reached:
             weights[dirs.index(finish_dir)] *= -1
             weights[dirs.index((finish_dir[0]*-1, finish_dir[1]*-1))] *= -1
+            print("halfway",weights)
         else:
             weights[dirs.index(start_dir)] *= -1
         neighbors = [(pos[0]+1, pos[1]),
