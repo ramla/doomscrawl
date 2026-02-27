@@ -39,7 +39,10 @@ class AStar:
         self.iters = 0
 
     def gridify(self):
-        """Creating the grid to operate A* in. A total bodge."""
+        """Creating the grid to operate A* in. A total bodge.
+
+        Grid is created by checking the collision of a corridor square sized pygame Mask against
+        a mask with rooms + a margin around them."""
         self.grid = []
         for y in range(int(config.viewport_y/config.corridor_width)):
             self.grid.append([])
@@ -51,26 +54,34 @@ class AStar:
                 self.grid[y].append(occupied)
 
     def get_path(self, a, b, slope):
-        """The thick of the meat"""
+        """The thick of the meat. Beginning from a point, adds neighboring cells to an ordered
+        queue with the queued object containing:
+        - cost [see second item] + heuristic estimate cost to goal
+        - true [found] cost of movement from start to position
+        - an iterator to avoid ordering cells by position
+        - position
+        - previous position
+
+            When handling a queue object, the position is added [as key] to a dictionary of visited
+        cells with cost and previous position. This dictionary is used to backtrack the best path
+        after reaching the goal.
+
+            The manhattan heuristic returns admissible cost estimate for a grid where path can be
+        found so that cost for any cell is 1 or more. The default cell cost and cost for traversing
+        an existing corridor can be adjusted in config.py if not later by passing an argument.
+
+            By setting the corridor cost to less than 1 the best path is not guaranteed to be
+        found. Corridors can also be connected by increasing the default cost, but this increases
+        the area explored by A*.
+        """
         if self.grid is None:
             self.update_rooms_mask()
             self.gridify()
         start_tiles, goal_tiles = self.do_the_door_spaghetti(a, b, slope)
         start, goal = start_tiles[-1], goal_tiles[-1]
         visited = {} # position: (cost, previous)
-        queue = [] # (cost+estimate, cost, iterator[to avoid sorting by position], pos, prev_pos)
+        queue = [] # (cost+estimate, cost, iterator, pos, prev_pos)
         estimate = self.manhattan(start,goal)
-        if self.visualizer_queue and config.astar_debug:
-            px_goal, px_start = self.get_centerified_px_pos(goal), \
-                                self.get_centerified_px_pos(start)
-            self.visualizer_queue.put(methodcaller("new_vertex",
-                                                Vertex(px_goal[0],
-                                                        px_goal[1]),
-                                                active=True, reset_active=False))
-            self.visualizer_queue.put(methodcaller("new_vertex",
-                                                Vertex(px_start[0],
-                                                        px_start[1]),
-                                                active=True, reset_active=False))
         pos = None
         heapq.heappush(queue, (estimate, 0, self.iters, start, (-1, -1)))
         while queue:
@@ -78,12 +89,14 @@ class AStar:
             estimate, cost, _, pos, previous = heapq.heappop(queue)
             prev_cost, _ = visited.get(pos, (float("inf"), None))
             if prev_cost <= cost:
-                continue
+                continue # with an inadmissible setup a better path may be later found for a
+                         # visited cell
             visited[pos] = (cost, previous)
             if pos == goal:
-                break
+                break   # important to break only after goal comes about from queue instead of
+                        # when first encountering it to find optimal solution
             if self.visualizer_queue and config.astar_debug:
-                px_pos = self.get_px_pos(pos)
+                px_pos = self.get_px_pos(pos) # debug/visualisation for explored cells
                 self.visualizer_queue.put(methodcaller("new_vertex",
                                                        Vertex(px_pos[0], px_pos[1]),
                                                        active=False, reset_active=False))
@@ -92,16 +105,17 @@ class AStar:
                 new_cost = cost + self.grid[neighbor[1]][neighbor[0]]
                 heapq.heappush(queue, (new_cost + estimate, new_cost, self.iters, neighbor, pos))
                 self.calcs += 1
+
         print(f"A* corridor {a}-{b} done, cumulative {self.calcs} calculations " \
               f"{self.iters} loop iterations")
-        path = [self.get_px_pos(pos) for pos in start_tiles+goal_tiles] # include extension of door
-                                                                    # to path (gridification hack)
-        while pos != start:
+        # include extension of door to path (gridification hack)
+        path = [self.get_px_pos(pos) for pos in start_tiles+goal_tiles]
+        while pos != start: # backtrack the found least cost route from dictionary
             self.grid[pos[1]][pos[0]] = config.astar_corridor_cost
             px_pos = self.get_px_pos(pos)
             path.append(px_pos)
             _, pos = visited[pos]
-        if config.astar_debug:
+        if config.astar_debug: # draw the found path with active vertex colour
             for pos in path:
                 self.visualizer_queue.put(methodcaller("new_vertex", Vertex(*pos),
                                                         active=True, reset_active=False))
@@ -172,7 +186,7 @@ class AStar:
         return abs(a[0]-b[0]) + abs(a[1]-b[1])
 
     def draw_collision_overlay(self, viewport):
-        """debug overlay function"""
+        """debug overlay function - overlays can be toggled in-app with 0-key"""
         overlay = self.corridor_mask_cumulative.to_surface(setcolor=(200, 0, 0, 100),
                                                        unsetcolor=(0, 0, 0, 0))
         overlay2 = self.rooms_mask.to_surface(setcolor=(0,0,170,127),
