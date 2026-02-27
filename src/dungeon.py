@@ -138,17 +138,18 @@ class Room(pygame.Rect):
 
     def get_door(self, slope, b_room=False):
         doors = self.get_doors()
-        if slope > 1 and b_room or slope < -1 and not b_room:
+        delta = 1
+        if (slope > 1 and b_room) or (slope < -1 and not b_room):
             # door on bottom edge
-            return doors[0]
-        if slope > 1 or slope < -1 and b_room:
+            return doors[0], (0,delta)
+        if slope > 1 or (slope < -1 and b_room):
             # door on top edge
-            return doors[1]
+            return doors[1], (0,-delta)
         if b_room:
             # door on left edge
-            return doors[2]
+            return doors[2], (-delta,0)
         # door on right edge
-        return doors[3]
+        return doors[3], (delta,0)
 
     def get_doors(self):
         return (self.center[0], self.center[1]-self.size[1]/2), \

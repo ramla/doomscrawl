@@ -9,24 +9,23 @@ room_debug = False  #print room list to terminal when passing room centers to
 bw_debug = False
 problematic_point_debug = False
 visualizer_debug = False
+astar_debug = False
 random_rooms = True
 draw_coords = False
 any_debug = circumcircle_debug or \
             collision_debug or \
             bw_debug or \
             problematic_point_debug or \
-            visualizer_debug
+            visualizer_debug or \
+            astar_debug
 delay_visualisation = True
 freetype_compatibility_mode = False
-if freetype_compatibility_mode:
+if freetype_compatibility_mode or astar_debug:
     draw_coords = False
 
 viewport_x = 1200
 viewport_y = 700
 target_fps = 60
-
-thickness = min(viewport_x, viewport_y) // 40
-super_tri_margin = thickness * 2
 
 color = {
     "light1":   pygame.Color(235,235,235),  # platinum
@@ -58,8 +57,16 @@ color_circumcircle_final = color["col3"]
 
 FONTFILE = "assets/WarsawGothic-BnBV.otf"
 
+thickness = min(viewport_x, viewport_y) // 40
+
 room_size_min = (thickness*3, thickness*3)
 room_size_max = (viewport_x//4, viewport_y//3)
+room_margin = thickness*3
+corridor_width = thickness
+
+vertex_radius = thickness/3
+edge_width = thickness/5
+triangle_width = thickness/5
 
 vertex_anim_duration = 1/60
 if delay_visualisation:
@@ -70,11 +77,6 @@ if delay_visualisation:
     circumcircle_anim_duration = 3
 circumcircle_anim_drop_scale = 0.95
 
-vertex_radius = thickness/3
-edge_width = thickness/5
-triangle_width = thickness/5
-corridor_width = thickness*1.5
-
 visualisation_delay_min = 0
 if delay_visualisation:
     visualisation_delay_min = 1/60
@@ -84,7 +86,7 @@ draw_final_circumcircles = True
 player_speed = 20 * thickness
 
 helptext_test = "\n\n\n\n\n" \
-                "     F         Next step\n" \
+                "        F         Next step\n" \
                 "Q, Esc         Next exception\n" \
                 "Space         End visual checks\n"
 helptext      = "Esc, Q        Quit\n" \
