@@ -1,5 +1,6 @@
 import sys
 from enum import Enum, auto
+from random import choices
 import pygame
 
 import config
@@ -131,9 +132,17 @@ class Doomcrawl:
                         else:
                             self.state_machine.set(GameState.STEP_CLEARED)
                     elif self.state_machine.get() == GameState.CCS_CLEARED:
-                        self.pruned_edges = self.get_pruned_edges(self.bw.final_edges,
-                                            start_at=self.dungeon.get_player_room_center())
-                        # self.pruned_edges = self.bw.final_edges # uncomment to keep all edges
+                        self.pruned_edges = set(self.get_pruned_edges(self.bw.final_edges,
+                                            start_at=self.dungeon.get_player_room_center()))
+                        n_extra_edges = int((len(self.bw.final_edges) -
+                                             len(self.pruned_edges)) / 3)
+                        self.pruned_edges = list(self.pruned_edges |
+                                                 set(choices(list(self.bw.final_edges -
+                                                             self.pruned_edges),
+                                                             k=n_extra_edges)))
+                        # path shortest edges first to have shortcuts for the longer ones to
+                        # save compute
+                        self.pruned_edges.sort(key=lambda x: x.get_length())
                         self.visualizer.method_to_queue("redraw_edges", self.pruned_edges)
                         self.state_machine.set(GameState.PRUNED)
                     elif self.state_machine.get() == GameState.PRUNED:
