@@ -43,7 +43,7 @@ class Dungeon:
         viewport.blit(overlay, (0, 0))
 
     def add_room(self, size=None, pos=None, center=None, fail_allowed=True):
-        if center is not None:
+        if center is not None: # creating from room list, no reason to retry if it don't fit
             tries = 1
         elif fail_allowed:
             tries = 30
@@ -73,10 +73,9 @@ class Dungeon:
         sizes = []
         for room in self.rooms.values():
             centers.append(room.get_center())
-        if config.room_debug:
-            for room in self.rooms.values():
-                sizes.append(room.size)
-            print("room list:",list(zip(centers, sizes)))
+        for room in self.rooms.values():
+            sizes.append(room.size)
+        print("rooms =",list(zip(centers, sizes)))
         return centers
 
     def handle_point_rejection(self, point):
