@@ -112,8 +112,10 @@ class BowyerWatson:
         if config.bw_debug:
             print("triangulating", new_vertex)
         bad_triangles = set()
+        checked_triangles = set()
         self.visualize_new(new_vertex, active=True, reset_active=True)
         for triangle in self.triangles.values():
+            # iterating through triangles to find first bad one
             try:
                 new_vertex_in_circumcircle = triangle.vertex_in_circumcircle(new_vertex)
             except ValueError:
@@ -123,11 +125,14 @@ class BowyerWatson:
             triangle.visualize_circle(self.visualizer_queue,
                                       vertex_inside=new_vertex_in_circumcircle)
             if new_vertex_in_circumcircle:
-                self.handle_found_triangle(triangle, bad_triangles, new_vertex)
+                # first conflicting circumcircle found, moving to check neighboring triangles only
+                self.handle_found_triangle(triangle, bad_triangles, checked_triangles, new_vertex)
                 if self.point_pushed_back:
                     return
                 else:
                     break
+            else:
+                checked_triangles.add(triangle)
         bad_tri_edgecount = {}
         for triangle in bad_triangles:
             for edge in triangle.get_edges():
@@ -135,10 +140,9 @@ class BowyerWatson:
                 if not key in bad_tri_edgecount:
                     bad_tri_edgecount[key] = 0
                 bad_tri_edgecount[key] += 1
-                # self.visualize_new(edge, active=True, reset_active=True)
         polygon = [self.edges[key] for key, count in bad_tri_edgecount.items() if count == 1]
-        # for edge in polygon:
-            # self.visualize_new(edge, active=True)
+        for edge in polygon:
+            self.visualize_new(edge, active=True)
         for triangle in bad_triangles:
             self.remove_triangle(triangle)
         for edge in polygon:
@@ -148,28 +152,25 @@ class BowyerWatson:
             if self.is_valid_triangle(vertex_a, vertex_b, new_vertex):
                 self.add_triangle(vertex_a, vertex_b, new_vertex)
 
-    def handle_found_triangle(self, triangle, bad_triangles, new_vertex):
+    def handle_found_triangle(self, triangle, bad_triangles, checked_triangles, new_vertex):
         if self.point_pushed_back:
-            # triangle.visualize_remove_circle(self.visualizer_queue)
             return
-        # for vertex in triangle.get_vertices():
-            # self.visualize_activate(vertex)
         bad_triangles.add(triangle)
-        self.visualize_activate(triangle)
-        # triangle.visualize_remove_circle(self.visualizer_queue)
+        checked_triangles.add(triangle)
         for edge in triangle.get_edges():
             for triangle_by_edge in self.triangles_with_edge[edge.get_key()]:
-                try:
-                    new_vertex_in_circumcircle = triangle_by_edge.vertex_in_circumcircle(new_vertex)
-                except ValueError:
-                    self.handle_vertex_in_circumcircle_value_error(new_vertex.get_coord())
-                    return
-                if triangle_by_edge not in bad_triangles \
-                        and new_vertex_in_circumcircle:
-                    triangle.visualize_circle(self.visualizer_queue,
-                                              vertex_inside=new_vertex_in_circumcircle)
-                    bad_triangles.add(triangle_by_edge)
-                    self.handle_found_triangle(triangle_by_edge, bad_triangles, new_vertex)
+                if triangle_by_edge not in checked_triangles:
+                    try:
+                        new_vertex_in_circumcircle = triangle_by_edge.vertex_in_circumcircle(new_vertex)
+                        triangle_by_edge.visualize_circle(self.visualizer_queue,
+                                                vertex_inside=new_vertex_in_circumcircle)
+                    except ValueError:
+                        self.handle_vertex_in_circumcircle_value_error(new_vertex.get_coord())
+                        return
+                    if triangle_by_edge not in bad_triangles \
+                            and new_vertex_in_circumcircle:
+                        bad_triangles.add(triangle_by_edge)
+                        self.handle_found_triangle(triangle_by_edge, bad_triangles, checked_triangles, new_vertex)
 
     def handle_vertex_in_circumcircle_value_error(self, point):
         """point has been found within error margin of a circumcircle, push it to the back of the
@@ -272,7 +273,7 @@ class BowyerWatson:
         for triangle in self.triangles:
             self.visualize_remove(triangle)
         if self.visualizer_queue:
-            self.visualizer_queue.put(methodcaller("clear_entities_by_type", circumcircles=True))
+            self.visualizer_queue.put(methodcaller("clear_entities_by_type", circumcircles=True, been_through_queue=True))
             if config.draw_final_circumcircles:
                 for triangle in self.triangles.values():
                     triangle.visualize_circle(self.visualizer_queue,

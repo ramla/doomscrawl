@@ -75,6 +75,8 @@ class Doomcrawl:
                         self.bw.iterate_once()
                         self.state_machine.set(GameState.STEPPED)
                     if self.bw.ready and self.visualizer.event_queue.empty():
+                        self.visualizer.method_to_queue("clear_entities_by_type",
+                                                        edges=True)
                         self.state_machine.set(GameState.TRIANGULATED)
                 case GameState.TRIANGULATING:
                     if self.visualizer.event_queue.empty():
@@ -82,10 +84,14 @@ class Doomcrawl:
                             self.bw.add_points(self.dungeon.get_room_centers())
                         elif self.bw.waiting_to_finalize:
                             self.bw.finalize_triangulation()
+                            self.visualizer.method_to_queue("clear_entities_by_type",
+                                                            edges=True,
+                                                            been_through_queue=True)
                             self.state_machine.set(GameState.TRIANGULATED)
                         else:
                             self.visualizer.method_to_queue("clear_entities_by_type",
-                                                            circumcircles=True)
+                                                            circumcircles=True, edges=True,
+                                                            been_through_queue=True)
                             self.bw.iterate_once()
                         if self.bw.ready:
                             self.state_machine.set(GameState.TRIANGULATED)
@@ -125,21 +131,23 @@ class Doomcrawl:
                 if event.key == pygame.K_F1 or \
                    event.key == pygame.K_h:
                     self.helping = True
-                if event.key == pygame.K_f:
+                if event.key == pygame.K_f and self.visualizer.event_queue.empty():
                     if self.state_machine.get() in [GameState.READY, GameState.STEP_CLEARED]:
                         self.state_machine.set(GameState.STEPPING)
                     elif self.state_machine.get() == GameState.TRIANGULATED:
                         self.visualizer.method_to_queue("clear_final_view", self.bw.final_edges)
                         self.state_machine.set(GameState.CCS_CLEARED)
                     elif self.state_machine.get() == GameState.STEPPED:
-                        self.visualizer.method_to_queue("clear_entities_by_type",
-                                                        circumcircles=True)
                         if not self.bw.ready and self.bw.waiting_to_finalize:
+                            self.visualizer.method_to_queue("clear_entities_by_type",
+                                                            circumcircles=True, edges=True, been_through_queue=True)
                             self.bw.finalize_triangulation()
                             self.state_machine.set(GameState.TRIANGULATED)
                         elif self.bw.ready:
                             self.state_machine.set(GameState.TRIANGULATED)
                         else:
+                            self.visualizer.method_to_queue("clear_entities_by_type",
+                                                            circumcircles=True, edges=True)
                             self.state_machine.set(GameState.STEP_CLEARED)
                     elif self.state_machine.get() == GameState.CCS_CLEARED:
                         # prioritise player location for start location of minimum spanning tree

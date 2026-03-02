@@ -195,7 +195,14 @@ class Visualizer:
     def clear_entities_by_type(self, vertices=False,
                                      edges=False,
                                      triangles=False,
-                                     circumcircles=False):
+                                     circumcircles=False,
+                                     been_through_queue=False):
+        if self.event_queue.not_empty and not been_through_queue:
+            self.method_to_queue("clear_entities_by_type", vertices=vertices,
+                                              edges=edges, triangles=triangles,
+                                              circumcircles=circumcircles,
+                                              been_through_queue=True)
+            return
         to_remove = []
         for key, entity in self.entities.items():
             if (
@@ -214,7 +221,7 @@ class Visualizer:
         self.event_queue.put(methodcaller(*args, **kwargs))
 
     def clear_final_view(self, edges):
-        self.clear_entities_by_type(triangles=True, circumcircles=True)
+        self.clear_entities_by_type(triangles=True, circumcircles=True, been_through_queue=True)
         for edge in edges:
             self.new_edge(edge)
 
@@ -291,10 +298,12 @@ class VisualEdge:
     def activate(self):
         self.active = True
         self.color = self.color_active
+        self.width *= 1.75
 
     def deactivate(self):
         self.active = False
         self.color = self.color_normal
+        self.width = config.edge_width
 
     def get_bw_id(self):
         return self.bw_id
