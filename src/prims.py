@@ -16,7 +16,7 @@ def prims(points, edges, start_at=None):
     if len(edges) < 1:
         return []
     visited = set()
-    mst_edges = []
+    mst_edges = set()
     graph = Graph(points)
     for edge in edges:
         a, b, weight = edge
@@ -35,8 +35,8 @@ def prims(points, edges, start_at=None):
                 if b not in visited:
                     heapq.heappush(reachable, (w, b, node))
             visited.add(node)
-            mst_edges.append(sorted((node, prev)))
-    return mst_edges
+            mst_edges.add(tuple(sorted((node, prev))))
+    return [list(edge) for edge in mst_edges]
 
 
 class Graph:
