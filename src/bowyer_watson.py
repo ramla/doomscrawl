@@ -151,8 +151,8 @@ class BowyerWatson:
         if self.point_pushed_back:
             # triangle.visualize_remove_circle(self.visualizer_queue)
             return
-        for vertex in triangle.get_vertices():
-            self.visualize_activate(vertex)
+        # for vertex in triangle.get_vertices():
+            # self.visualize_activate(vertex)
         bad_triangles.add(triangle)
         self.visualize_activate(triangle)
         # triangle.visualize_remove_circle(self.visualizer_queue)
@@ -165,6 +165,8 @@ class BowyerWatson:
                     return
                 if triangle_by_edge not in bad_triangles \
                         and new_vertex_in_circumcircle:
+                    triangle.visualize_circle(self.visualizer_queue,
+                                              vertex_inside=new_vertex_in_circumcircle)
                     bad_triangles.add(triangle_by_edge)
                     self.handle_found_triangle(triangle_by_edge, bad_triangles, new_vertex)
 
