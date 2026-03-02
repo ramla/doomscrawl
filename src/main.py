@@ -30,7 +30,7 @@ try:
             rooms = list(zip(roomlocs, [DEFAULT_SIZE]*len(roomlocs)))
         elif currentArg in ("-b", "--bw_demo"):
             super_triangle = [(30, 30), (1170, 670), (30,670)]
-            roomlocs = [(93, 223), (200,350), (159, 539), (379, 531), (420, 400)]
+            roomlocs = [(200,350), (159, 539), (379, 531), (420, 400), (300,440)]
             rooms = list(zip(roomlocs, [DEFAULT_SIZE]*len(roomlocs)))
         elif currentArg in ("-d", "--dungeon="):
             rooms = ast.literal_eval(currentVal)
