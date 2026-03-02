@@ -7,11 +7,11 @@ viewport_y = 700
 target_fps = 60
 
                           # Heuristic is always calculated at cost of 1 per step.
-astar_step_cost = 1.4     # Larger default step cost results in more area explored and thus
+astar_step_cost = 1       # Larger default step cost results in more area explored and thus
                           # (possibly) more connected corridors at the cost of more compute.
-astar_corridor_cost = 1   # Value <1 here results in an inadmissible heuristic - saves
-                          # on compute with the compromise of maybe not finding the best
-                          # path
+astar_corridor_cost = 0   # Value <1 here results in an inadmissible heuristic - connects
+                          # through the corridors that happen to be within the area that is
+                          # explored in regular case, but misses opportunities further away.
 
 circumcircle_debug = False
 collision_debug = False # show some masks related to collision, ingame shortcut 0
@@ -29,7 +29,7 @@ any_debug = circumcircle_debug or \
             problematic_point_debug or \
             visualizer_debug or \
             astar_debug
-delay_visualisation = True # toggle with key 1 ingame
+delay_visualisation = True
 freetype_compatibility_mode = False # enable if pygame.freetype disagrees with your system
 if freetype_compatibility_mode or astar_debug:
     draw_coords = False
@@ -76,18 +76,18 @@ vertex_radius = thickness/3
 edge_width = thickness/5
 triangle_width = thickness/5
 
-vertex_anim_duration = 1/60
+vertex_anim_duration = 3/60
 if delay_visualisation:
     vertex_anim_duration = 0.3
 vertex_anim_new_scale = 1.5
-circumcircle_anim_duration = 1/60
+circumcircle_anim_duration = 3/60
 if delay_visualisation:
     circumcircle_anim_duration = 3
 circumcircle_anim_drop_scale = 0.95
 
 visualisation_delay_min = 0
 if delay_visualisation:
-    visualisation_delay_min = 1/60
+    visualisation_delay_min = 3/60
 
 draw_final_circumcircles = True
 

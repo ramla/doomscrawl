@@ -33,8 +33,11 @@ class AStar:
         self.room_lookup = room_lookup
         self.visualizer_queue = visualizer_queue
         self.space = pygame.Mask((config.corridor_width, config.corridor_width), fill=True)
+        self.space_surface = self.space.to_surface(setcolor=(127,0,0,20))
         self.grid = None
         self.rooms_mask = pygame.Mask((config.viewport_x, config.viewport_y))
+        self.explored_cumulative = pygame.Surface((config.viewport_x, config.viewport_y),
+                                                  pygame.SRCALPHA)
         self.calcs = 0
         self.iters = 0
 
@@ -104,6 +107,7 @@ class AStar:
                 estimate = self.manhattan(neighbor, goal)
                 new_cost = cost + self.grid[neighbor[1]][neighbor[0]]
                 heapq.heappush(queue, (new_cost + estimate, new_cost, self.iters, neighbor, pos))
+                self.draw_explored(self.get_centerified_px_pos(pos))
                 self.calcs += 1
 
         print(f"A* corridor {a}-{b} done, cumulative {self.calcs} calculations " \
@@ -156,7 +160,7 @@ class AStar:
         if config.astar_debug:
             for point in a_tiles+b_tiles:
                 point_px = self.get_px_pos(point)
-                self.corridor_mask_cumulative.draw(self.space, self.centerify(point_px))
+                self.explored_cumulative.draw(self.space, self.centerify(point_px))
         return a_tiles, b_tiles
 
     def align_to_grid(self, value, direction):
@@ -185,13 +189,16 @@ class AStar:
     def manhattan(self, a, b):
         return abs(a[0]-b[0]) + abs(a[1]-b[1])
 
+    def draw_explored(self, pos):
+        self.explored_cumulative.blit(self.space_surface, pos)
+
     def draw_collision_overlay(self, viewport):
         """debug overlay function - overlays can be toggled in-app with 0-key"""
-        overlay = self.corridor_mask_cumulative.to_surface(setcolor=(200, 0, 0, 100),
-                                                       unsetcolor=(0, 0, 0, 0))
+        # overlay = self.explored_cumulative.to_surface(setcolor=(200, 0, 0, 100),
+        #                                                unsetcolor=(0, 0, 0, 0))
         overlay2 = self.rooms_mask.to_surface(setcolor=(0,0,170,127),
                                               unsetcolor=(0,0,0,0))
-        viewport.blit(overlay, (0,0))
+        viewport.blit(self.explored_cumulative, (0,0))
         viewport.blit(overlay2, (0,0))
 
     def centerify(self, point, positive_delta=False):
