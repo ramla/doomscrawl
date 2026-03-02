@@ -273,7 +273,9 @@ class BowyerWatson:
         for triangle in self.triangles:
             self.visualize_remove(triangle)
         if self.visualizer_queue:
-            self.visualizer_queue.put(methodcaller("clear_entities_by_type", circumcircles=True, been_through_queue=True))
+            self.visualizer_queue.put(methodcaller("clear_entities_by_type",
+                                                   circumcircles=True,
+                                                   edges=True, been_through_queue=True))
             if config.draw_final_circumcircles:
                 for triangle in self.triangles.values():
                     triangle.visualize_circle(self.visualizer_queue,
