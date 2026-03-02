@@ -39,7 +39,7 @@ color = {
     "col1":     pygame.Color(82,72,156),    # dusty grape
     "col2":     pygame.Color(64,98,187),    # smart blue
     "col3":     pygame.Color(74,25,66),     # blackberry cream
-    "col4":     pygame.Color(9,161,41),     # medium jungle
+    "col4":     pygame.Color(50,150,140),   #
     "col5":     pygame.Color(112,3,83),     # crimson violet
     "col6":     pygame.Color(119,32,20),    # dark wine
     "fill1":    pygame.Color(175,67,25,31), # rusty spice
@@ -47,14 +47,15 @@ color = {
     "hilite1":  pygame.Color(89,195,195),   # strong cyan
     "hilite2":  pygame.Color(244,91,105),   # bubblegum pink
     "hilite3":  pygame.Color(237,240,96),   # canary yellow
+    "hilite4":  pygame.Color(140,60,180),   #
     "dark1":    pygame.Color(180,25,60),    # rejection red
     "bg":       pygame.Color(20,23,30),     # ink black
-    }
+}
 color_room = color["col1"]
 color_tri = color["col2"]
 color_tri_active = color["hilite3"]
 color_edge = color["col2"]
-color_edge_active = color["col4"]
+color_edge_active = color["hilite4"]
 color_vertex = color["col5"]
 color_vertex_active = color["hilite2"]
 color_vertex_rejected = color["dark1"]
