@@ -80,12 +80,19 @@ class Doomcrawl:
                     if self.visualizer.event_queue.empty():
                         if self.bw.ready and len(self.bw.next_points) == 0:
                             self.bw.add_points(self.dungeon.get_room_centers())
+                        elif self.bw.waiting_to_finalize:
+                            self.bw.finalize_triangulation()
+                            self.state_machine.set(GameState.TRIANGULATED)
                         else:
                             self.visualizer.method_to_queue("clear_entities_by_type",
                                                             circumcircles=True)
                             self.bw.iterate_once()
                         if self.bw.ready:
                             self.state_machine.set(GameState.TRIANGULATED)
+                    # elif self.state_machine.get() == GameState.TRIANGULATING \
+                    #                                  and self.bw.waiting_to_finalize:
+                    #     self.bw.finalize_triangulation()
+                    #     self.state_machine.set(GameState.TRIANGULATED)
 
             self.visualizer.visualize(frame_time)
 
@@ -127,7 +134,10 @@ class Doomcrawl:
                     elif self.state_machine.get() == GameState.STEPPED:
                         self.visualizer.method_to_queue("clear_entities_by_type",
                                                         circumcircles=True)
-                        if self.bw.ready:
+                        if not self.bw.ready and self.bw.waiting_to_finalize:
+                            self.bw.finalize_triangulation()
+                            self.state_machine.set(GameState.TRIANGULATED)
+                        elif self.bw.ready:
                             self.state_machine.set(GameState.TRIANGULATED)
                         else:
                             self.state_machine.set(GameState.STEP_CLEARED)
@@ -256,6 +266,7 @@ TRANSITIONS = {
                                  GameState.STEPPING},
     GameState.TRIANGULATING:    {GameState.TRIANGULATING,
                                  GameState.STEPPING,
+                                 GameState.STEPPED,
                                  GameState.TRIANGULATED},
     GameState.STEPPING:         {GameState.TRIANGULATING,
                                  GameState.STEPPED,

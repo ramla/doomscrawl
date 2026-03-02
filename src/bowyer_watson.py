@@ -71,6 +71,7 @@ class BowyerWatson:
         self.triangles = {}
         self.triangles_with_edge = {}
         self.ready = True
+        self.waiting_to_finalize = False
         self.add_points(points)
 
     def add_points(self, points):
@@ -186,8 +187,7 @@ class BowyerWatson:
             self.triangulate_point(point)
             break
         if not self.next_points:
-            self.finalize_triangulation()
-            self.ready = True
+            self.wait_after_last_point()
 
     def triangulate_all(self):
         while self.next_points:
@@ -228,14 +228,8 @@ class BowyerWatson:
         vertex_c = Vertex(max_any * 20, min_any - max_any * 10)
         return (vertex_a, vertex_b, vertex_c)
 
-    def finalize_triangulation(self):
-        self.remove_super_tri()
-        if self.visualizer_queue:
-            self.visualizer_queue.put(methodcaller("clear_entities_by_type", circumcircles=True))
-            self.draw_final_circumcircles()
-            for triangle in self.triangles:
-                self.visualize_remove(triangle)
-        self.find_final_edges()
+    def wait_after_last_point(self):
+        self.waiting_to_finalize = True
 
     def remove_super_tri(self):
         for triangle in list(self.triangles.values()):
@@ -272,11 +266,18 @@ class BowyerWatson:
             for edge in triangle.get_edges():
                 self.final_edges.add(edge)
 
-    def draw_final_circumcircles(self):
-        if config.draw_final_circumcircles:
-            for triangle in self.triangles.values():
-                triangle.visualize_circle(self.visualizer_queue,
-                                          color=config.color_circumcircle_final)
+    def finalize_triangulation(self):
+        self.remove_super_tri()
+        self.find_final_edges()
+        for triangle in self.triangles:
+            self.visualize_remove(triangle)
+        if self.visualizer_queue:
+            self.visualizer_queue.put(methodcaller("clear_entities_by_type", circumcircles=True))
+            if config.draw_final_circumcircles:
+                for triangle in self.triangles.values():
+                    triangle.visualize_circle(self.visualizer_queue,
+                                            color=config.color_circumcircle_final)
+        self.waiting_to_finalize = False
 
     def add_triangle(self, vertex_a, vertex_b, vertex_c):
         vertex_a, vertex_b, vertex_c = sorted((vertex_a, vertex_b, vertex_c))
