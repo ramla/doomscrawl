@@ -8,8 +8,8 @@ rooms = None
 super_triangle = None
 
 args = sys.argv[1:]
-options = "tr:s:"
-long_options = ["no_freetype", "rooms=", "super="]
+options = "tr:s:d:pb"
+long_options = ["no_freetype", "rooms=", "super=", "dungeon=", "paper_case", "bw_demo"]
 try:
     arguments, values = getopt.getopt(args, options, long_options)
     for currentArg, currentVal in arguments:
@@ -22,14 +22,18 @@ try:
         elif currentArg in ("-s", "--super="):
             try:
                 super_triangle = ast.literal_eval(currentVal)
-            except IndexError:
-                if super_triangle is None:
-                    print("No points given for super triangle, using test case values")
-                    super_triangle = [(-1100, -950), (-1100, 1700), (2400, 350)]
-    if super_triangle and rooms is None:
-        print("No room locations given, using test case values A to F")
-        roomlocs = [(643, 223), (159, 539), (379, 531), (861, 527), (399, 221), (420, 400)]
-        rooms = list(zip(roomlocs, [DEFAULT_SIZE]*len(roomlocs)))
+            except Exception as e:
+                print(f"something went wrong: {e}")
+        elif currentArg in ("-p", "--paper_case"):
+            super_triangle = [(-1100, -950), (-1100, 1700), (2400, 350)]
+            roomlocs = [(643, 223), (159, 539), (379, 531), (861, 527), (399, 221), (420, 400)]
+            rooms = list(zip(roomlocs, [DEFAULT_SIZE]*len(roomlocs)))
+        elif currentArg in ("-b", "--bw_demo"):
+            super_triangle = [(30, 30), (1170, 670), (30,670)]
+            roomlocs = [(93, 223), (200,350), (159, 539), (379, 531), (420, 400)]
+            rooms = list(zip(roomlocs, [DEFAULT_SIZE]*len(roomlocs)))
+        elif currentArg in ("-d", "--dungeon="):
+            rooms = ast.literal_eval(currentVal)
 except getopt.error as err:
     print(str(err))
 
@@ -61,19 +65,18 @@ except getopt.error as err:
 # roomlocs = [(269, 238), (585, 119), (430, 178), (182, 319)]
 # roomlocs = [(145, 247), (768, 75), (261, 256), (603, 291)]
 
-# ==== (barely) concave triangulations
+# ==== (barely) concave triangulation
 # roomlocs = [(140, 136), (506, 268), (1112, 451), (804, 370), (1080, 98), (760, 475), (940, 579)]
-
-# roomlocs = [(140, 136), (506, 268), (804, 370), (1080, 98), (760, 475), (940, 579), (650,400)]
-
-# ==== use a location list with default (small) room size to fit many points
-# DEFAULT_SIZE = (50,50)
-# rooms = list(zip(roomlocs, [DEFAULT_SIZE]*len(roomlocs)))
 
 # ==== pre_randomise rooms
 # from utility import get_random_points_int
 # n = 30
 # roomlocs = get_random_points_int(n, (100,100), (1100,600))
+
+# ==== use a location list with a small room size to fit many points
+# DEFAULT_SIZE = (40,40)
+# roomsizes = [DEFAULT_SIZE] * len(roomlocs)
+# rooms = list(zip(roomlocs, roomsizes))
 
 # ==== random generate room sizes
 # from dungeon import Room

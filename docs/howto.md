@@ -29,13 +29,20 @@
 **`-t, --no_freetype`**<br>
 Do not import pygame.freetype compatibility mode. Help text and coordinate rendering not available.
 
+**`-p, --paper_case`**<br>
+Render the paper-simulated test case
+
+**`-b, --bw_demo`**<br>
+Render a sample case with a supertriangle that fits inside viewport if it looks confusing when it's outside of it
+
 **`-r, --rooms=`**<br>
 Give coordinates for room centers in Python list format. The rooms will be rendered with a small size of 70*70 pixels.
-> `-r [(10,10), (50,20)]`
+> `-r '[(10,10), (50,20)]'`
 
 **`-s, --super=`**<br>
-Give coordinates for custom super triangle in Python list format. Can
-also be given as the only argument to launch relevant test case with
-rooms A to F.
+Give coordinates for custom super triangle in Python list format.
+> `-s '[(-1100, -950), (-1100, 1700), (2400, 350)]'`
 
-> `-s [(-1100, -950), (-1100, 1700), (2400, 350)]`
+**`-d, --dungeon=`**<br>
+Give a list of (room_center, room_size) tuples
+> `-d '[((678, 403), (141, 95)), ((928, 550), (51, 165)), ((734, 120), (146, 75))]'`
