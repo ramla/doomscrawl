@@ -142,6 +142,9 @@ class Doomcrawl:
                             self.player.x, self.player.y = start_at
                         self.pruned_edges = set(self.get_pruned_edges(self.bw.final_edges,
                                             start_at=start_at))
+                        self.visualizer.method_to_queue("redraw_edges", self.pruned_edges)
+                        self.state_machine.set(GameState.PRUNED)
+                    elif self.state_machine.get() == GameState.PRUNED:
                         # proceed to shuffle an amount of edges back
                         n_extra_edges = int((len(self.bw.final_edges) -
                                              len(self.pruned_edges)) / 3)
@@ -153,12 +156,12 @@ class Doomcrawl:
                         # existing shortcuts for the longer ones to save compute
                         self.pruned_edges.sort(key=lambda x: x.get_length())
                         self.visualizer.method_to_queue("redraw_edges", self.pruned_edges)
-                        self.state_machine.set(GameState.PRUNED)
-                    elif self.state_machine.get() == GameState.PRUNED:
+                        self.state_machine.set(GameState.COMPLEMENTED)
+                    elif self.state_machine.get() == GameState.COMPLEMENTED:
                         self.dungeon.create_corridors(self.pruned_edges)
                         self.state_machine.set(GameState.CONNECTED)
                     elif self.state_machine.get() == GameState.CONNECTED:
-                        #clear corridors here?
+                        # entering bat country
                         self.state_machine.set(GameState.READY)
                 if event.key == pygame.K_1:
                     config.delay_visualisation = not config.delay_visualisation
@@ -221,6 +224,10 @@ class Doomcrawl:
         self.viewport.blit(self.help_surface, (0,0))
 
     def get_pruned_edges(self, bw_edges, start_at=None):
+        """This is how prims is called. Coords are extracted from the edges and edge lengths are
+        got for weights. Prims returns a list of edges in the format of sorted tuples of two
+        coords, which are then used to filter relevant edge objects back from input list.
+        """
         nodes = set()
         edges = []
         for edge in bw_edges:
@@ -235,15 +242,16 @@ class Doomcrawl:
 
 
 class GameState(Enum):
-    READY = auto()
-    STEPPING = auto()
-    STEPPED = auto()
-    STEP_CLEARED = auto()
-    TRIANGULATING = auto()
-    TRIANGULATED = auto()
-    CCS_CLEARED = auto()
-    PRUNED = auto()
-    CONNECTED = auto()
+    READY = auto()          # can add rooms or start triangulation
+    STEPPING = auto()       # triangulate one point
+    STEPPED = auto()        # one point has been triangulated, waiting for input
+    STEP_CLEARED = auto()   # circumcircles cleared, waiting for input
+    TRIANGULATING = auto()  # triangulate everything
+    TRIANGULATED = auto()   # all points triangulated, showing final circumcircles
+    CCS_CLEARED = auto()    # final circumcircles cleared, showing only triangulation
+    PRUNED = auto()         # minimum spanning tree created and rendered
+    COMPLEMENTED = auto()   # random edges have been added back and rendered
+    CONNECTED = auto()      # corridors created and rendered
 
 TRANSITIONS = {
     GameState.READY:            {GameState.TRIANGULATING,
@@ -262,7 +270,8 @@ TRANSITIONS = {
                                  GameState.TRIANGULATED},
     GameState.TRIANGULATED:     {GameState.READY, GameState.CCS_CLEARED, GameState.PRUNED},
     GameState.CCS_CLEARED:          {GameState.READY, GameState.PRUNED},
-    GameState.PRUNED:           {GameState.READY, GameState.CONNECTED},
+    GameState.PRUNED:           {GameState.READY, GameState.COMPLEMENTED},
+    GameState.COMPLEMENTED:     {GameState.READY, GameState.CONNECTED},
     GameState.CONNECTED:        {GameState.READY}
 }
 
