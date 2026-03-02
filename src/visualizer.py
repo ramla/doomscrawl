@@ -158,6 +158,7 @@ class Visualizer:
                         print("deactivating vertex",vertex)
         try:
             self.entities[vertex].activate()
+            self.animate_entity(vertex, methodcaller("anim_new"))
         except KeyError:
             if config.visualizer_debug:
                 print("visualizer.activate_vertex() KeyError:", vertex)
@@ -199,11 +200,12 @@ class Visualizer:
         for key, entity in self.entities.items():
             if (
                 vertices      * isinstance(entity, VisualVertex)    or \
-                edges         * isinstance(entity, VisualEdge)      or \
-                triangles     * isinstance(entity, VisualTriangle)  or \
-                circumcircles * isinstance(entity, VisualCircumcircle) \
+                edges         * isinstance(entity, VisualEdge)     or \
+                triangles     * isinstance(entity, VisualTriangle)
             ):
                 to_remove.append(key)
+            if circumcircles * isinstance(entity, VisualCircumcircle):
+                entity.anim_drop(duration=10/60)
         for key in to_remove:
             self.entities.pop(key)
 
@@ -259,12 +261,11 @@ class VisualVertex:
 
     def activate(self):
         self.active = True
-        self.color = self.color_active
-        self.anim_new(scale=2*config.vertex_anim_new_scale)
+        self.color = pygame.Color(self.color_active)
 
     def deactivate(self):
         self.active = False
-        self.color = self.color_normal
+        self.color = pygame.Color(self.color_normal)
 
 
 class VisualEdge:
