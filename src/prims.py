@@ -7,7 +7,7 @@ def prims(points, edges, start_at=None):
     an empty queue.
 
     Parameters:
-        points: list of unique values for nodes
+        points: list of hashables for nodes
 
         edges: list of tuples in format of (node_a, node_b, weight)
 
@@ -23,10 +23,12 @@ def prims(points, edges, start_at=None):
         graph.add_edge(a, b, weight)
     if start_at is None:
         start_at = choice(graph.nodes)
+
     reachable = []
     for edge in graph.edges[start_at]:
         weight, b = edge
         heapq.heappush(reachable, (weight, b, start_at))
+
     while len(visited) != len(graph.nodes):
         _, node, prev = heapq.heappop(reachable)
         if node not in visited:
