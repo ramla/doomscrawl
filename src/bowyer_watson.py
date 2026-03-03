@@ -106,11 +106,12 @@ class BowyerWatson:
         if point not in self.point_tries:
             self.point_tries[point] = 0
         elif self.point_tries[point] > len(self.rejected_points) + 1:
+            # tried enough times to insert a point but it keeps landing on an existing
+            # circumcircle's perimeter, reject it
             self.reject_point(point)
             return
+
         new_vertex = Vertex(point[0],point[1])
-        if config.bw_debug:
-            print("triangulating", new_vertex)
         bad_triangles = set()
         checked_triangles = set()
         self.visualize_new(new_vertex, active=True, reset_active=True)
@@ -128,11 +129,15 @@ class BowyerWatson:
                 # first conflicting circumcircle found, moving to check neighboring triangles only
                 self.handle_found_triangle(triangle, bad_triangles, checked_triangles, new_vertex)
                 if self.point_pushed_back:
+                    # point found to lie on an existing circumcircle's perimenter, try adding later
                     return
                 else:
+                    # bad triangles have been found, end the for loop
                     break
             else:
                 checked_triangles.add(triangle)
+        # from all bad triangles, the cavity polygon is formed from
+        # the edges not shared by any triangles
         bad_tri_edgecount = {}
         for triangle in bad_triangles:
             for edge in triangle.get_edges():
@@ -147,10 +152,7 @@ class BowyerWatson:
             self.remove_triangle(triangle)
         for edge in polygon:
             vertex_a, vertex_b = edge.get_vertices()
-            if config.bw_debug:
-                print("validating triangle: new vert with edge:",edge)
-            if self.is_valid_triangle(vertex_a, vertex_b, new_vertex):
-                self.add_triangle(vertex_a, vertex_b, new_vertex)
+            self.add_triangle(vertex_a, vertex_b, new_vertex)
 
     def handle_found_triangle(self, triangle, bad_triangles, checked_triangles, new_vertex):
         if self.point_pushed_back:
@@ -170,7 +172,8 @@ class BowyerWatson:
                     if triangle_by_edge not in bad_triangles \
                             and new_vertex_in_circumcircle:
                         bad_triangles.add(triangle_by_edge)
-                        self.handle_found_triangle(triangle_by_edge, bad_triangles, checked_triangles, new_vertex)
+                        self.handle_found_triangle(triangle_by_edge, bad_triangles,
+                                                   checked_triangles, new_vertex)
 
     def handle_vertex_in_circumcircle_value_error(self, point):
         """point has been found within error margin of a circumcircle, push it to the back of the
@@ -250,8 +253,6 @@ class BowyerWatson:
                     break
 
     def restore_super_triangle(self):
-        if config.bw_debug:
-            print("RESTORING SUPER STORAGE:", self.super_storage)
         for triangle in self.super_storage:
             self.triangles[triangle.get_key()] = triangle
             for edge in triangle.get_edges():
@@ -302,13 +303,6 @@ class BowyerWatson:
         return triangle.get_key()
 
     def remove_triangle(self, triangle):
-        if not triangle.get_key() in self.triangles:
-            if config.bw_debug:
-                print(f"remove triangle: NOT FOUND {triangle}")
-        if config.bw_debug:
-            for vert in self.super_verts:
-                if vert not in triangle.get_vertices():
-                    print(f"remove triangle: {triangle}")
         self.triangles.pop(triangle.get_key())
         edges = triangle.get_edges()
         for edge in edges:
@@ -355,22 +349,6 @@ class BowyerWatson:
             elif isinstance(bw_object, Triangle):
                 self.visualizer_queue.put(methodcaller("activate_triangle",
                                                        bw_object, reset_active))
-
-    def is_valid_triangle(self, vertex_a, vertex_b, vertex_c):
-        # two_or_more_same_points = vertex_a == vertex_b \ # commenting this out as verts are added
-        #                        or vertex_b == vertex_c \ # thru set now
-        #                        or vertex_a == vertex_c
-        edge_a, edge_b = Edge(vertex_a, vertex_b), Edge(vertex_b, vertex_c)
-        slope_a, slope_b = edge_a.get_slope(), edge_b.get_slope()
-        # if two_or_more_same_points or slope_a == slope_b:
-        if slope_a == slope_b:
-            if config.bw_debug:
-                print("====================================\n",
-                    #   "invalid triangle: ", vertex_a, vertex_b, vertex_c,
-                  f"\n  slopes {slope_a}, {slope_b}",
-                  "=======================")
-            return False
-        return True
 
     def reject_point(self, point):
         print(f"REJECTED {point}")
@@ -553,10 +531,9 @@ class Triangle:
             c_2 = edges[1].get_pb_intercept()
             det = a_1 - a_2
             if det == 0:
-                if config.bw_debug:
-                    print("HELP!!!!!!!!!!!! BR", self)
+                raise ValueError
                     # fails when points are in a straight line
-                    # but this is checked for with BowyerWatson.is_valid_triangle()
+                    # but this should not happen
             x = (c_2 - c_1) / det
             y = ((a_1 * c_2) - (a_2 * c_1)) / det
             self.circumcenter = Vertex(x,y)
