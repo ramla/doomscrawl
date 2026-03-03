@@ -17,7 +17,6 @@ circumcircle_debug = False
 collision_debug = False # show some masks related to collision, ingame shortcut 0
 room_debug = False  # print room list to terminal when passing room centers to
                     # triangulation, among other things
-bw_debug = False
 problematic_point_debug = False
 visualizer_debug = False
 astar_debug = False # enable this to show explored area
@@ -25,7 +24,6 @@ random_rooms = True
 draw_coords = False # draw coordinates along with a VisualVertex
 any_debug = circumcircle_debug or \
             collision_debug or \
-            bw_debug or \
             problematic_point_debug or \
             visualizer_debug or \
             astar_debug
