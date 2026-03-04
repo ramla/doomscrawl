@@ -83,5 +83,22 @@ except getopt.error as err:
 # roomsizes = [Room.get_random_size("") for _ in range(len(roomlocs))]
 # rooms = list(zip(roomlocs, roomsizes))
 
+# Case to observe how A* does not always find the best path with inadmissible heuristic. Corridors
+# are sometimes generated side by side if default cost is exactly heuristic cost and corridor cost
+# is 0. When the three rooms at the edge in bottom left corner get an additional diagonal edge from
+# second-to-lowest to second-to-leftmost, the added corridor runs next to the old one, but A* never
+# explores the corridor tiles between the leftmost rooms beyond the first two tiles that haven't
+# strayed left from the beginning door (higher room's bottom door). When default cost is increased
+# even slightly (say, config.astar_step_cost = 1.05), the search is expanded to the next tile
+# "backwards" from goal. If the difference is kept low enough, the explored area isn't drastically
+# increased in practice, but result is visually more consistent. Note that the added edges are
+# randomised and I believe it has about 1/3 chance of being generated. You can rerun the edge
+# addition phase by hitting F enough times.
+# rooms = [((193, 330), (211, 173)), ((538, 353), (81, 98)), ((908, 428), (191, 142)),
+#          ((412, 594), (50, 68)), ((624, 192), (115, 75)), ((570, 571), (96, 90)),
+#          ((388, 287), (58, 140)), ((1049, 124), (107, 55)), ((181, 558), (203, 58)),
+#          ((798, 211), (48, 114)), ((836, 599), (192, 49)), ((275, 116), (203, 52)),
+#          ((907, 206), (46, 145)), ((705, 394), (107, 63)), ((1090, 518), (48, 77))]
+
 app = Doomcrawl(rooms, super_tri=super_triangle)
 app.start()
