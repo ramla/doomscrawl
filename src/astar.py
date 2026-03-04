@@ -135,7 +135,7 @@ class AStar:
         corridors visually connect to the room as well."""
         a_door, a_dir = self.room_lookup[a].get_door(slope)
         b_door, b_dir = self.room_lookup[b].get_door(slope, b_room=True)
-        if config.astar_debug:
+        if config.astar_debug and self.visualizer_queue:
             for pos in [a_door, b_door]:
                 self.visualizer_queue.put(methodcaller("new_vertex", Vertex(*pos),
                                                         active=False, reset_active=False))
@@ -150,17 +150,19 @@ class AStar:
         non-infinite cost."""
         a_tiles, b_tiles = [a], [b]
         while self.grid[a[1]][a[0]] > config.astar_step_cost:
-            self.grid[a[1]][a[0]] = 1
+            self.grid[a[1]][a[0]] = 0
             a = a[0] + a_dir[0], a[1] - a_dir[1]
             a_tiles.append(a)
         while self.grid[b[1]][b[0]] > config.astar_step_cost:
-            self.grid[b[1]][b[0]] = 1
+            self.grid[b[1]][b[0]] = 0
             b = b[0] + b_dir[0], b[1] - b_dir[1]
             b_tiles.append(b)
+        self.grid[a[1]][a[0]] = 0
+        self.grid[b[1]][b[0]] = 0
         if config.astar_debug:
             for point in a_tiles+b_tiles:
                 point_px = self.get_px_pos(point)
-                self.explored_cumulative.draw(self.space, self.centerify(point_px))
+                # self.explored_cumulative.draw(self.space, self.centerify(point_px))
         return a_tiles, b_tiles
 
     def align_to_grid(self, value, direction):
@@ -168,9 +170,9 @@ class AStar:
         the outside of it to reduce visual glitches"""
         scaled = value/config.corridor_width
         if direction > 0:
-            return ceil(scaled)
-        elif direction < 0:
             return floor(scaled)
+        elif direction < 0:
+            return ceil(scaled)
         else:
             return round(scaled)
 

@@ -4,8 +4,8 @@ import config
 from astar import AStar
 
 class Dungeon:
-    def __init__(self, screen_size, rooms, exceptions=False, visualizer_queue=None):
-        self.screen_size = screen_size
+    def __init__(self, rooms=None, exceptions=False, visualizer_queue=None):
+        self.screen_size = (config.viewport_x, config.viewport_y)
         self.init_collision_surface()
         self.render_collision_mask()
         self.init_texture()
