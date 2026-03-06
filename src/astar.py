@@ -56,7 +56,7 @@ class AStar:
                 occupied = float("inf") if overlaps_room else config.astar_step_cost
                 self.grid[y].append(occupied)
 
-    def get_path(self, a, b, slope):
+    def get_path(self, a, b, slope=None, grid_coords=False):
         """The thick of the meat. Beginning from a point, adds neighboring cells to an ordered
         queue with the queued object containing:
         - cost [see second item] + heuristic estimate cost to goal
@@ -76,12 +76,28 @@ class AStar:
             By setting the corridor cost to less than 1 the best path is not guaranteed to be
         found. Corridors can also be connected by increasing the default cost, but this increases
         the area explored by A*.
+
+        Parameters:
+            a, b: start and end room centers or if grid_coords, coords in grid (used in testing)
+
+            slope: slope of the edge between rooms a and b, used to find the doors in said rooms
+
+            grid_coords: to test the pathing separately, plain grid coordinates can be passed
+
+        Returns a list of coordinates, either pixel converted or grid depending on grid_coords
         """
-        if self.grid is None:
+        if self.grid is None and not grid_coords:
             self.update_rooms_mask()
             self.gridify()
-        start_tiles, goal_tiles = self.do_the_door_spaghetti(a, b, slope)
-        start, goal = start_tiles[-1], goal_tiles[-1]
+        start, goal = a, b
+        path = []
+        if not grid_coords:
+            # a,b are free coordinate room centers: extrude doorways from the inside of the rooms
+            # so that they are not overlapping the room. include all of the extrusion in path which
+            # is used to draw the corridor to visually connect it to the inside of the room
+            start_tiles, goal_tiles = self.do_the_door_spaghetti(a, b, slope)
+            start, goal = start_tiles[-1], goal_tiles[-1]
+            path = [self.get_px_pos(pos) for pos in start_tiles+goal_tiles]
         visited = {} # position: (cost, previous)
         queue = [] # (cost+estimate, cost, iterator, pos, prev_pos)
         estimate = self.manhattan(start,goal)
@@ -107,19 +123,25 @@ class AStar:
                 estimate = self.manhattan(neighbor, goal)
                 new_cost = cost + self.grid[neighbor[1]][neighbor[0]]
                 heapq.heappush(queue, (new_cost + estimate, new_cost, self.iters, neighbor, pos))
-                self.draw_explored(self.get_centerified_px_pos(pos))
+                self.draw_explored(self.get_centerified_px_pos(neighbor))
                 self.calcs += 1
 
         print(f"A* corridor {a}-{b} done, cumulative {self.calcs} calculations " \
               f"{self.iters} loop iterations")
-        # include extension of door to path (gridification hack)
-        path = [self.get_px_pos(pos) for pos in start_tiles+goal_tiles]
         while pos != start: # backtrack the found least cost route from dictionary
             self.grid[pos[1]][pos[0]] = config.astar_corridor_cost
-            px_pos = self.get_px_pos(pos)
-            path.append(px_pos)
+            if grid_coords:
+                path.append(pos)
+            else:
+                px_pos = self.get_px_pos(pos)
+                path.append(px_pos)
             _, pos = visited[pos]
-        if config.astar_debug: # draw the found path with active vertex colour
+        if grid_coords:
+            path.append(start)
+        else:
+            # include extension of door to path (gridification hack)
+            path += [self.get_px_pos(pos) for pos in start_tiles+goal_tiles]
+        if config.astar_debug and self.visualizer_queue: # draw the found path with active v. colour
             for pos in path:
                 self.visualizer_queue.put(methodcaller("new_vertex", Vertex(*pos),
                                                         active=True, reset_active=False))

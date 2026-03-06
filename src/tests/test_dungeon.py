@@ -40,6 +40,8 @@ class TestAStar(unittest.TestCase):
         mst_edges = self.get_pruned_edges(bw.final_edges)
         self.dungeon.create_corridors(mst_edges)
 
+        self.standalone_astar = AStar({})
+
     def test_astar_connects_all_rooms(self):
         grid = self.dungeon.astar.grid
         room_and_corridor_nodes = []
@@ -101,8 +103,45 @@ class TestAStar(unittest.TestCase):
         edge_objects = [edge for edge in bw_edges if edge.get_coords() in mst]
         return edge_objects
 
-# The A* algorithm terminates once it finds the shortest path to a specified goal, rather than
-# generating the entire shortest-path tree from a specified source to all possible goals.
+    def test_astar_path_length(self):
+        self.standalone_astar.grid = [[8,8,8,1,1,1,1,1,1,1,1,1],
+                                      [8,8,8,1,1,8,8,8,1,1,1,1],
+                                      [1,1,1,1,1,8,8,8,1,1,1,1],
+                                      [1,1,1,1,1,8,8,8,1,1,8,8],
+                                      [1,1,1,1,1,8,8,8,1,1,8,8],
+                                      [1,1,1,1,1,8,8,8,1,1,8,8],
+                                      [1,1,1,1,1,8,8,8,1,1,1,1],
+                                      [1,1,1,1,1,1,1,1,1,1,1,1]]
+        for y in range(len(self.standalone_astar.grid)):
+            for x in range(len(self.standalone_astar.grid[0])):
+                # replace visually nicer placeholder eights with actual room cell weight
+                if self.standalone_astar.grid[y][x] == 8:
+                    self.standalone_astar.grid[y][x] = float("inf")
+        start, goal = (1,2), (9,4) # x,y
+        path = self.standalone_astar.get_path(start, goal, grid_coords=True)
+        # shortest path to goal including start and goal cells is 15 in length via north
+        self.assertEqual(len(path), 15)
+        # if astar took the route above the middle room the cell there was changed to weight 0
+        self.assertEqual(self.standalone_astar.grid[0][7], 0)
+
+        self.standalone_astar.grid = [[8,8,8,1,1,1,1,1,1,1,1,1],
+                                      [8,8,8,1,1,8,8,8,8,8,8,1],
+                                      [1,1,1,1,1,8,8,8,1,1,1,1],
+                                      [1,1,1,1,1,8,8,8,1,1,8,8],
+                                      [1,1,1,1,1,8,8,8,1,1,8,8],
+                                      [1,1,1,1,1,8,8,8,1,1,8,8],
+                                      [1,1,1,1,1,8,8,8,1,1,1,1],
+                                      [1,1,1,1,1,1,1,1,1,1,1,1]]
+        for y in range(len(self.standalone_astar.grid)):
+            for x in range(len(self.standalone_astar.grid[0])):
+                # replace visually nicer placeholder eights with actual room cell weight
+                if self.standalone_astar.grid[y][x] == 8:
+                    self.standalone_astar.grid[y][x] = float("inf")
+        path = self.standalone_astar.get_path(start, goal, grid_coords=True)
+        # shortest path is now via south, 17 in length via north
+        self.assertEqual(len(path), 17)
+        # took the route below the middle room
+        self.assertEqual(self.standalone_astar.grid[7][7], 0)
 
 class Graph:
     def __init__(self, nodes, edges):
