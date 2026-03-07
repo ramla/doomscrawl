@@ -20,17 +20,23 @@ The BowyerWatson class itself is tested with some potentially hard cases like tr
 
 ### Simulation on Paper
 
-One implemented test compares the algorithm's resulting triangles versus what was drawn on paper. A custom supertriangle override was created to simulate the exact same situation as was reasonable to draw on paper. Additionally when using custom super triangle the list of points is not processed for duplicates through set to preserve order. At first we add vertex A. The only triangle is a bad triangle, and the polygon formed by bad triangles is the super triangle XYZ. An edge is drawn from each super vertex to A, forming three triangles. Drawn on paper we can find the two circumcircles that will be violated by adding B. The resulting polygon is XYZA, only the triangle XAY remains. 
+One implemented test compares the algorithm's resulting triangles versus what was drawn on paper. A custom supertriangle override was created to simulate the exact same situation as was reasonable to draw on paper. Additionally when using custom super triangle the list of points is not processed for duplicates through set to preserve order.
 
-An edge is drawn to B from each of the polygon's vertices, forming XDA, XZD, ZYD, DYA. After drawing XDA and ZYD's circumcircles we can see that the latter is violated by adding C. We can also trivially see that ZYD is the only other bad triangle.
+[Drawing 1](https://github.com/ramla/doomscrawl/blob/main/docs/images/1.JPG), [Render 1](https://github.com/ramla/doomscrwal/blow/main/docs/images/r1.jpg): At first we add vertex A. The only triangle is a bad triangle, and the polygon formed by bad triangles is the super triangle XYZ. An edge is drawn from each super vertex to A, forming three triangles. Drawn on paper we can find the two circumcircles that will be violated by adding B. The resulting polygon is XYZA, only the triangle XAY remains.
 
-New triangles ZCB, ZYC and CYA are created in the ZYAB polygon. Next we can see that D falls inside ZYC's and CYA's circumcircle, but outside the other triangles'.
+[Drawing 2](https://github.com/ramla/doomscrawl/blob/main/docs/images/2.JPG), [Render 2](https://github.com/ramla/doomscrwal/blow/main/docs/images/r2.jpg): An edge is drawn to B from each of the polygon's vertices, forming XDA, XZD, ZYD, DYA. After drawing XDA and ZYD's circumcircles we can see that the latter is violated by adding C. We can also trivially see that ZYD is the only other bad triangle.
 
-Triangles ZDC, ZYD and ADY are created in the ZYAC polygon. Then, adding E we see it inside the circumcircles of BCA and XBA. Edge AB disappears with the two triangles, while AE, BE, CE and EX form the triangles BCE, CAE, XBE and XEA inside XBCA.
+[Drawing 3](https://github.com/ramla/doomscrawl/blob/main/docs/images/3.JPG), [Render 3](https://github.com/ramla/doomscrwal/blow/main/docs/images/r3.jpg): New triangles ZCB, ZYC and CYA are created in the ZYAB polygon. Next we can see that D falls inside ZYC's and CYA's circumcircle, but outside the other triangles'.
 
-For a five point triangulation we are ready adding points. Now we must remove the triangles connected to supervertices X, Y and Z. The final triangulation contains the triangles BCE, ECA and CDA. We can also notice that there is an intersection of all three circumcircles of the triangulations in the middle. 
+[Drawing 4](https://github.com/ramla/doomscrawl/blob/main/docs/images/4.JPG), [Render 4](https://github.com/ramla/doomscrwal/blow/main/docs/images/r4.jpg): Triangles ZDC, ZYD and ADY are created in the ZYAC polygon. Then, adding E we see it inside the circumcircles of BCA and XBA.
 
-Assume we didn't remove the super-connected triangles yet and continued the triangulation by visually aiming point F (420, 400) at the middle of the intersection, we should end up with three bad triangles forming the polygon BCDAE and point F in the middle of it, connecting to the vertices and forming five triangles FAE, FEB, FBC, FCD and FDA. The written test looks for triangles formed with these vertices and asserts equal the amount of triangles that we expect to find in each case.
+[Drawing 5](https://github.com/ramla/doomscrawl/blob/main/docs/images/5.JPG), [Render 5](https://github.com/ramla/doomscrwal/blow/main/docs/images/r5.jpg): Edge AB disappears with the two triangles, while AE, BE, CE and EX form the triangles BCE, CAE, XBE and XEA inside XBCA.
+
+[Drawing 6](https://github.com/ramla/doomscrawl/blob/main/docs/images/6.JPG), [Render 6](https://github.com/ramla/doomscrwal/blow/main/docs/images/r6.jpg): For a five point triangulation we are ready adding points. Now we must remove the triangles connected to supervertices X, Y and Z. The final triangulation contains the triangles BCE, ECA and CDA. We can also notice that there is an intersection of all three circumcircles of the triangulations in the middle.
+
+[Drawing 7](https://github.com/ramla/doomscrawl/blob/main/docs/images/7.JPG), [Render 7](https://github.com/ramla/doomscrwal/blow/main/docs/images/r7.jpg): Assume we didn't remove the super-connected triangles yet and continued the triangulation by visually aiming point F (420, 400) at the middle of the intersection, we should end up with three bad triangles forming the polygon BCDAE and point F in the middle of it, connecting to the vertices and forming five triangles FAE, FEB, FBC, FCD and FDA. The written test looks for triangles formed with these vertices and asserts equal the amount of triangles that we expect to find in each case.
+
+[Render 8](https://github.com/ramla/doomscrwal/blow/main/docs/images/r8.jpg): The final triangulation with its circumcircles after adding the sixth point.
 
 ### Hardcoded Tests
 
