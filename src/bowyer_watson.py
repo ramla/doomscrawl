@@ -425,11 +425,8 @@ class Edge:
             nominator = self.vertex_a.y - self.vertex_b.y
             denominator = self.vertex_a.x - self.vertex_b.x
             if denominator == 0:
-                nominator = self.vertex_b.y - self.vertex_a.y
-                denominator = self.vertex_b.x - self.vertex_a.x
-                if denominator == 0:
-                    self.slope = float("inf")
-                    return self.slope
+                self.slope = float("inf")
+                return self.slope
             self.slope = nominator / denominator
         return self.slope
 
