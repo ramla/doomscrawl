@@ -136,7 +136,6 @@ class TestBowyerWatson(unittest.TestCase):
     def test_hard_points(self):
         self.bw.add_points(self.hard_points)
         self.bw.triangulate_all()
-        # print(self.bw.triangles.values())
 
     def test_random_points_float_runs(self):
         min_coords = (0, 0)
@@ -144,18 +143,17 @@ class TestBowyerWatson(unittest.TestCase):
         n = 10**3
         self.bw.add_points(get_random_points_float(n, min_coords, max_coords))
         self.bw.triangulate_all()
-        # print(self.bw.triangles.values())
 
-    # def test_super_vert_generation_issue_or_circumcenter_logic(self):
-        # self.bw.add_points(self.point_of_difficulty)
-        # print(self.bw.triangles.values())
-        # self.bw.triangulate_all()
-        # print(self.bw.triangles.values())
+    def test_super_vert_generation_issue_or_circumcenter_logic(self):
+        self.bw.add_points(self.point_of_difficulty)
+        self.bw.triangulate_all()
+        self.assertEqual(len(self.bw.triangles), 1)
 
     def test_full_house(self):
         full_house_points = list(product(range(16), range(16)))
         self.bw.add_points(full_house_points)
         self.bw.triangulate_all()
+        self.assertGreater(len(self.bw.rejected_points), 1)
 
     def test_found_and_fixed_case_of_forming_1_tri_out_of_4_points(self):
         points = sorted(list(((559, 115), (96, 451), (358, 463), (956, 457))))
@@ -234,7 +232,7 @@ class TestBowyerWatson(unittest.TestCase):
             self.assertEqual(len(bw.triangles), 1,
                                 f"Well I didn't come to think of this edge case: {points}")
                                 # times this assertation failed so far: 1
-            return ("Point rejected due to being on circumcircle circumference", points)
+            return ("Point rejected due to being on circumcircle perimeter", points)
         if len(bw.triangles) == 1:
             # points location and order of triangulation may cause the sole edge
             # connecting a point to other triangulated points only form triangles containing
@@ -303,7 +301,7 @@ class TestBowyerWatson(unittest.TestCase):
                 self.assertFalse(triangle.vertex_in_circumcircle(vertex))
 
     def test_iterate_convex_triangulation_tri_count_test(self):
-        for _ in range(10*2):
+        for _ in range(10**2):
             self.random_n_points_convex_triangulation_tri_count()
 
     def random_n_points_convex_triangulation_tri_count(self):
@@ -328,6 +326,14 @@ class TestBowyerWatson(unittest.TestCase):
         is_convex, hull_points = self.is_convex_triangulation(bw.triangles)
         self.assertFalse(is_convex)
         self.assertEqual(hull_points, 5)
+
+        points = [(861, 527), (643, 223), (159, 539), (399, 221)]
+        # 379,531 is now removed from the list and a convex triangulation with 4 hull points should be found
+        bw = BowyerWatson(points=points)
+        bw.triangulate_all()
+        is_convex, hull_points = self.is_convex_triangulation(bw.triangles)
+        self.assertTrue(is_convex)
+        self.assertEqual(hull_points, 4)
 
     def is_convex_triangulation(self, tris):
         bounding_edges = {}
