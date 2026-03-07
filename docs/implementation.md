@@ -8,7 +8,7 @@
 -->
 ## Application Structure
 
-After arguments are interpreted, the program is run by creating a Doomscrawl class. This initialises pygame with BowyerWatson, Dungeon, Visualizer, Player and StateMachine objects. Vertex, Edge and Triangle classes are utilised in Visualizer as well as BowyerWatson. Dungeon creates Rooms as a subclass of pygame's Rect. StateMachine is used to handle order of operation in the game loop.
+After arguments are interpreted, the program is run by creating a Doomscrawl class and calling the start method. This initialises pygame with BowyerWatson, Dungeon, Visualizer, Player and StateMachine objects and starts the game loop. Vertex, Edge and Triangle classes are utilised in Visualizer as well as BowyerWatson. Dungeon creates Rooms as a subclass of pygame's Rect. StateMachine is used to handle order of operation in the game loop.
 
 The first state change happens when points are passed to BowyerWatson for triangulation. Triangulation is either stepped or done all at once, after which the final edges are filtered to a minimum spanning tree with prim's and the result is supplemented with random edges. They are then passed to the AStar class via Dungeon's create_corridors. When the first Corridor calls the get_path method of AStar, it generates the grid it's going to operate on and fetches the door locations from Rooms.
 

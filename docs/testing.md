@@ -42,17 +42,19 @@ For a later described random triangle count test, TestBowyerWatson.is_convex_tri
 
 #### Four Points Test
 
-A most thorough test on all the edge cases Bowyer-Watson can produce with four points and how they're being handled has been implemented. Random four unique points are generated and the validity of the resulting number of triangles or edges is asserted. Test is repeated with new points 10**3 times and edge cases can be visually confirmed after tests.
+A most thorough test on all the edge cases Bowyer-Watson can produce with four points and how they're being handled has been implemented. Random four unique points are generated and the validity of the resulting number of triangles or edges is asserted.
+
+Test is repeated with new points 10**3 times. The edge cases encountered (~40 in 1000) can be visually confirmed, the application launches with each excepted point set, which can be cancelled by pressing the space bar. The edge case description reads in the window title. Failing the test with a visual inspection is not implemented.
 
 - All convex triangulations of 4 points should result in two triangles. Convex is determined by checking whether any of the given points lie inside the triangle formed by the other three.
 
-- When three points lie close enough to being on the same line, point may be detected to lie within the triangle formed by other points but due to non-infinite distance to supervertices the result of two triangles is still valid.
+- As the most common exception, when three points lie close enough to being on the same line, point may be correctly detected to lie within the triangle formed by the other points, but due to non-infinite distance to supervertices the result of two triangles is still a valid result of the Bowyer-Watson algorithm. This is how Bowyer-Watson can result in a concave triangulation, even though the Delaunay triangulation is described has having a convex hull.
 
 - In four points, one may be rejected due to hitting another triangle's circumcircle's perimeter exactly enough => one triangle should be found.
 
-- Points location and order of triangulation may cause the sole edge connecting one point to other triangulated points only forms triangles containing supervertices, the edge will get removed in the end. For the use case this is handled by checking for such edge when removing triangles. This case should result in one triangle and four edges.
+- Points location and order of triangulation may cause the sole edge connecting one point to other triangulated points to only form triangles containing supervertices, and thus the edge will get removed in the end. For the use case this is handled by checking for such edge when removing triangles. This case should result in one triangle and four edges.
 
-- If all points lie close to being on the same line, all triangles may be supervertex-connected and be removed at the final phase. Again, this is handled and results in no triangles but three edges.
+- If all points lie close to being on the same line, all formed triangles may be supervertex-connected and be removed at the final phase. Again, this is handled and results in no triangles but three edges.
 
 #### No Other Points Inside Circumcircles
 
@@ -78,20 +80,17 @@ The pathing itself is tested with given grids with known best path lengths. The 
 
 ## Coverage
 
-As mentioned in implementation report, the coverage is not what it should be due to this being the first project where I used tests, resulting in me writing code that is hard to test before considering the tests that would cover it and how. Some of the code missing coverage is entirely unused and could be removed or could be otherwise turned a blind eye to, but in BowyerWatson there is an embarrassing uncovered section 118->141 which is the whole process of finding bad triangles.
+As mentioned in implementation report, the coverage is not what it should be due to this being the first project where I used tests, resulting in me writing code that is hard to write tests for before considering the tests that would cover it and how.
+
+Some of the code missing coverage is entirely unused and could be removed or could otherwise possibly be turned a blind eye to, but in BowyerWatson coverage report lists an embarrassing uncovered section 118->141 which is the entire section of finding bad triangles in the triangulate_point method.
 
 ```
-====================== 23 passed in 28.47s =======================
+====================== 24 passed in 30.39s =======================
 Name                   Stmts   Miss Branch BrPart  Cover   Missing
 ------------------------------------------------------------------
-src/astar.py             131     12     52      6    87%   106->129,
-                    118-119, 145-146, 161-162, 185-186, 223-226, 231
-src/bowyer_watson.py     366     34    156      9    88%   118->141,
-                    185, 189-194, 214, 236, 256-264, 280->284,
-                    323, 325, 337->exit, 342-350, 400, 403, 430->433,
-                    483, 534, 566-567, 570
+src/astar.py             131     12     52      6    87%   106->129, 118-119, 145-146, 161-162, 185-186, 223-226, 231
+src/bowyer_watson.py     380     48    158      8    85%   118->141, 185, 189-194, 214, 236, 256-264, 280->284, 323, 325, 337->exit, 342-350, 361-371, 376-377, 380, 425, 428, 505, 556, 588-589, 592
 src/prims.py              34      1     16      2    94%   17, 24->27
-src/utility.py             5      0      0      0   100%
 ------------------------------------------------------------------
-TOTAL                    536     47    224     17    88%
+TOTAL                    545     61    226     16    86%
 ```
