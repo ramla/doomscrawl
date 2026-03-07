@@ -8,6 +8,8 @@ Procedural dungeon generator utilising Delauney triangulation to find sane conne
 
 [Implementation Report](https://github.com/ramla/doomscrawl/blob/main/docs/implementation.md)
 
+[Testing Report](https://github.com/ramla/doomscrawl/blob/main/docs/testing.md)
+
 [Specifications](https://github.com/ramla/doomscrawl/blob/main/docs/specifications.md)
 
 [Weekly Report 1](https://github.com/ramla/doomscrawl/blob/main/docs/weekly_1.md)
@@ -16,6 +18,4 @@ Procedural dungeon generator utilising Delauney triangulation to find sane conne
 [Weekly Report 4](https://github.com/ramla/doomscrawl/blob/main/docs/weekly_4.md)
 [Weekly Report 5](https://github.com/ramla/doomscrawl/blob/main/docs/weekly_5.md)
 [Weekly Report 6](https://github.com/ramla/doomscrawl/blob/main/docs/weekly_6.md)
-
-
-[Testing Report](https://github.com/ramla/doomscrawl/blob/main/docs/testing.md)
+[Final Weekly](https://github.com/ramla/doomscrawl/blob/main/docs/weekly_final.md)
